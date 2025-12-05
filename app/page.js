@@ -1,7 +1,25 @@
 // src/app/page.js
-import Link from "next/link";
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const searchParams = useSearchParams();
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam) {
+      const errorMessages = {
+        access_denied: "You denied access to GitHub. Please try again.",
+        missing_code: "Authentication failed. Please try again.",
+        auth_failed: "Authentication failed. Please try again.",
+      };
+      setError(errorMessages[errorParam] || "An error occurred during login.");
+    }
+  }, [searchParams]);
+  
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       {/* Hero Section */}
@@ -17,6 +35,13 @@ export default function Home() {
             Deploy your frontend projects instantly. 
             Free hosting powered by Cloudflare Pages.
           </p>
+          
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          )}
           
           {/* Features */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
