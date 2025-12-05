@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1764969629628,
+      "tag": "0000_salty_warbird",
+      "breakpoints": true
+    }
+  ]
+}
