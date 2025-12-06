@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useDeploymentPolling } from "@/hooks/useDeploymentPolling";
 import LogViewer from "@/components/LogViewer";
+import AIAnalysis from "@/components/AIAnalysis";
 
 export default function ProjectDetail() {
   const params = useParams();
@@ -312,6 +313,16 @@ function DeploymentCard({ deployment, isLatest, projectId }) {
         runId={deployment.id} 
         status={deployment.status}
       />
+
+      {/* AI Analysis (only for failed deployments) */}
+      {deployment.status === "completed" && deployment.conclusion === "failure" && (
+        <AIAnalysis
+          projectId={projectId}
+          runId={deployment.id}
+          deploymentStatus={deployment.status}
+        />
+      )}
+
     </div>
   );
 }
