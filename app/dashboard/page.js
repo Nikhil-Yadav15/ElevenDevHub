@@ -59,6 +59,12 @@ export default function Dashboard() {
     router.push("/");
   }
   
+  // ✅ Add delete handler
+  const handleProjectDelete = (projectId) => {
+    setProjects(projects.filter(p => p.id !== projectId));
+    loadDashboard(); // Refresh stats
+  };
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -142,8 +148,13 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* ✅ Pass onDelete handler */}
             {projects.map(project => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard 
+                key={project.id} 
+                project={project}
+                onDelete={handleProjectDelete}
+              />
             ))}
           </div>
         )}
@@ -152,11 +163,39 @@ export default function Dashboard() {
   );
 }
 
-function ProjectCard({ project }) {
+// ✅ Updated ProjectCard with delete functionality
+function ProjectCard({ project, onDelete }) {
   const router = useRouter();
   
-  const handleCardClick = () => {
+  const handleCardClick = (e) => {
+    // Don't navigate if clicking delete button
+    if (e.target.closest('.delete-button')) {
+      return;
+    }
     router.push(`/projects/${project.id}`);
+  };
+  
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    
+    if (!confirm(`Delete "${project.name}"?`)) {
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: "DELETE",
+      });
+      
+      if (!res.ok) {
+        throw new Error("Failed to delete");
+      }
+      
+      onDelete(project.id);
+      alert("✅ Project deleted!");
+    } catch (err) {
+      alert(`❌ Failed to delete: ${err.message}`);
+    }
   };
   
   return (
@@ -173,7 +212,16 @@ function ProjectCard({ project }) {
             {project.repoOwner}/{project.repoName}
           </div>
         </div>
-        <StatusBadge status="success" />
+        <div className="flex items-center gap-2">
+          <StatusBadge status="success" />
+          <button
+            onClick={handleDelete}
+            className="delete-button text-red-400 hover:text-red-300 transition text-sm"
+            title="Delete project"
+          >
+            🗑️
+          </button>
+        </div>
       </div>
       
       <div className="text-sm text-gray-400 mb-4">
