@@ -9,6 +9,11 @@ export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
+  const [stats, setStats] = useState({
+    totalProjects: 0,
+    activeDeployments: 0,
+    successfulDeployments: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -31,6 +36,17 @@ export default function Dashboard() {
       const projectsRes = await fetch("/api/projects");
       const projectsData = await projectsRes.json();
       setProjects(projectsData.projects || []);
+      
+      // Load stats
+      const statsRes = await fetch("/api/stats");
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setStats(statsData.stats || {
+          totalProjects: 0,
+          activeDeployments: 0,
+          successfulDeployments: 0,
+        });
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -86,18 +102,18 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
             <div className="text-gray-400 text-sm mb-2">Total Projects</div>
-            <div className="text-3xl font-bold text-white">{projects.length}</div>
+            <div className="text-3xl font-bold text-white">{stats.totalProjects}</div>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
             <div className="text-gray-400 text-sm mb-2">Active Deployments</div>
-            <div className="text-3xl font-bold text-white">
-              {projects.filter(p => p.status === "active").length}
+            <div className="text-3xl font-bold text-blue-500">
+              {stats.activeDeployments}
             </div>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
             <div className="text-gray-400 text-sm mb-2">Successful Deploys</div>
             <div className="text-3xl font-bold text-green-500">
-              {projects.filter(p => p.status === "success").length}
+              {stats.successfulDeployments}
             </div>
           </div>
         </div>
