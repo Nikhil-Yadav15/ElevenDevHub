@@ -14,6 +14,7 @@ export default function ProjectDetail() {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deleting, setDeleting] = useState(false); // ✅ Add this
   
   const {
     deployments,
@@ -48,6 +49,33 @@ export default function ProjectDetail() {
     }
   }
   
+  // ✅ Add delete handler
+  async function handleDeleteProject() {
+    if (!confirm(`⚠️ Delete project "${project?.name}"?\n\nThis will remove the project from Eleven.\nGitHub repo and Cloudflare Pages will remain.`)) {
+      return;
+    }
+    
+    setDeleting(true);
+    
+    try {
+      const res = await fetch(`/api/projects/${params.id}`, {
+        method: "DELETE",
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete project");
+      }
+      
+      alert("✅ Project deleted successfully!");
+      router.push("/dashboard");
+    } catch (err) {
+      alert(`❌ Failed to delete: ${err.message}`);
+    } finally {
+      setDeleting(false);
+    }
+  }
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -76,6 +104,7 @@ export default function ProjectDetail() {
       {/* Header */}
       <header className="border-b border-gray-800 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          {/* ✅ Updated header section */}
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-white mb-1">{project.name}</h1>
@@ -88,12 +117,21 @@ export default function ProjectDetail() {
                 {project.cfSubdomain} →
               </a>
             </div>
-            <Link
-              href="/dashboard"
-              className="text-gray-400 hover:text-white transition"
-            >
-              ← Back
-            </Link>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleDeleteProject}
+                disabled={deleting}
+                className="text-sm text-red-400 hover:text-red-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleting ? "Deleting..." : "🗑️ Delete"}
+              </button>
+              <Link
+                href="/dashboard"
+                className="text-gray-400 hover:text-white transition"
+              >
+                ← Back
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -322,7 +360,6 @@ function DeploymentCard({ deployment, isLatest, projectId }) {
           deploymentStatus={deployment.status}
         />
       )}
-
     </div>
   );
 }

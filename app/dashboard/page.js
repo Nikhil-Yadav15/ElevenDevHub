@@ -9,6 +9,11 @@ export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
+  const [stats, setStats] = useState({
+    totalProjects: 0,
+    activeDeployments: 0,
+    successfulDeployments: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -31,6 +36,17 @@ export default function Dashboard() {
       const projectsRes = await fetch("/api/projects");
       const projectsData = await projectsRes.json();
       setProjects(projectsData.projects || []);
+      
+      // Load stats
+      const statsRes = await fetch("/api/stats");
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setStats(statsData.stats || {
+          totalProjects: 0,
+          activeDeployments: 0,
+          successfulDeployments: 0,
+        });
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -42,6 +58,12 @@ export default function Dashboard() {
     await fetch("/api/auth/logout");
     router.push("/");
   }
+  
+  // ✅ Add delete handler
+  const handleProjectDelete = (projectId) => {
+    setProjects(projects.filter(p => p.id !== projectId));
+    loadDashboard(); // Refresh stats
+  };
   
   if (loading) {
     return (
@@ -86,18 +108,18 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
             <div className="text-gray-400 text-sm mb-2">Total Projects</div>
-            <div className="text-3xl font-bold text-white">{projects.length}</div>
+            <div className="text-3xl font-bold text-white">{stats.totalProjects}</div>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
             <div className="text-gray-400 text-sm mb-2">Active Deployments</div>
-            <div className="text-3xl font-bold text-white">
-              {projects.filter(p => p.status === "active").length}
+            <div className="text-3xl font-bold text-blue-500">
+              {stats.activeDeployments}
             </div>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
             <div className="text-gray-400 text-sm mb-2">Successful Deploys</div>
             <div className="text-3xl font-bold text-green-500">
-              {projects.filter(p => p.status === "success").length}
+              {stats.successfulDeployments}
             </div>
           </div>
         </div>
@@ -126,8 +148,13 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* ✅ Pass onDelete handler */}
             {projects.map(project => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard 
+                key={project.id} 
+                project={project}
+                onDelete={handleProjectDelete}
+              />
             ))}
           </div>
         )}
@@ -136,11 +163,39 @@ export default function Dashboard() {
   );
 }
 
-function ProjectCard({ project }) {
+// ✅ Updated ProjectCard with delete functionality
+function ProjectCard({ project, onDelete }) {
   const router = useRouter();
   
-  const handleCardClick = () => {
+  const handleCardClick = (e) => {
+    // Don't navigate if clicking delete button
+    if (e.target.closest('.delete-button')) {
+      return;
+    }
     router.push(`/projects/${project.id}`);
+  };
+  
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    
+    if (!confirm(`Delete "${project.name}"?`)) {
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: "DELETE",
+      });
+      
+      if (!res.ok) {
+        throw new Error("Failed to delete");
+      }
+      
+      onDelete(project.id);
+      alert("✅ Project deleted!");
+    } catch (err) {
+      alert(`❌ Failed to delete: ${err.message}`);
+    }
   };
   
   return (
@@ -157,7 +212,16 @@ function ProjectCard({ project }) {
             {project.repoOwner}/{project.repoName}
           </div>
         </div>
-        <StatusBadge status="success" />
+        <div className="flex items-center gap-2">
+          <StatusBadge status="success" />
+          <button
+            onClick={handleDelete}
+            className="delete-button text-red-400 hover:text-red-300 transition text-sm"
+            title="Delete project"
+          >
+            🗑️
+          </button>
+        </div>
       </div>
       
       <div className="text-sm text-gray-400 mb-4">
