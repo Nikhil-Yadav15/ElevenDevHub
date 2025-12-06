@@ -125,6 +125,21 @@ export async function POST(request) {
       env.CF_ACCOUNT_ID
     );
     console.log("   ✅ Secret set");
+
+    // STEP 4.5: Set custom environment variables
+    if (body.envVars && body.envVars.length > 0) {
+      console.log(`🔐 Step 4.5/8: Setting ${body.envVars.length} custom environment variables...`);
+      for (const envVar of body.envVars) {
+        await setRepoSecret(
+          githubToken,
+          repoOwner,
+          repoName,
+          envVar.key,
+          envVar.value
+        );
+      }
+      console.log("   ✅ Custom env vars set");
+    }
     
     // STEP 5: Set GitHub variable - ELEVEN_PROJECT_NAME
     console.log("📌 Step 5/8: Setting ELEVEN_PROJECT_NAME variable...");
