@@ -9,6 +9,8 @@ export default function NewProject() {
   const router = useRouter();
   const [repos, setRepos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [fromCache, setFromCache] = useState(false);
   const [search, setSearch] = useState("");
   const [languageFilter, setLanguageFilter] = useState("all");
   
@@ -16,18 +18,30 @@ export default function NewProject() {
     loadRepos();
   }, []);
   
-  async function loadRepos() {
+  async function loadRepos(forceRefresh = false) {
     try {
-      const res = await fetch("/api/repos");
+      setLoading(true);
+      const url = forceRefresh 
+        ? "/api/repos?refresh=true" 
+        : "/api/repos";
+      
+      const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to load repos");
       
       const data = await res.json();
       setRepos(data.repos || []);
+      setFromCache(data.fromCache);
     } catch (error) {
       console.error("Load repos error:", error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  }
+  
+  async function handleRefresh() {
+    setRefreshing(true);
+    await loadRepos(true);
   }
   
   // Get unique languages
@@ -68,6 +82,23 @@ export default function NewProject() {
       
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Cache Status & Refresh */}
+        {fromCache && (
+          <div className="mb-4 flex items-center justify-between bg-blue-500/10 border border-blue-500/20 rounded-lg px-4 py-3">
+            <div className="flex items-center gap-2 text-sm text-blue-400">
+              <span>📦</span>
+              <span>Showing cached repositories</span>
+            </div>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="text-sm text-blue-400 hover:text-blue-300 disabled:opacity-50 transition"
+            >
+              {refreshing ? "Refreshing..." : "🔄 Refresh"}
+            </button>
+          </div>
+        )}
+        
         {/* Filters */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
           <input
@@ -88,6 +119,13 @@ export default function NewProject() {
               </option>
             ))}
           </select>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50"
+          >
+            {refreshing ? "⏳ Refreshing..." : "🔄 Refresh List"}
+          </button>
         </div>
         
         {/* Repos List */}
@@ -111,7 +149,6 @@ function RepoCard({ repo }) {
   const router = useRouter();
   
   function handleSelect() {
-    // Navigate to configuration page
     router.push(`/new-project/configure?owner=${repo.owner}&name=${repo.name}`);
   }
   
