@@ -55,7 +55,7 @@ export default function Dashboard() {
       {/* Header */}
       <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
             Eleven
           </h1>
           
