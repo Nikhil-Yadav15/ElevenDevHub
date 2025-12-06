@@ -12,6 +12,7 @@ import {
   commitWorkflowFile,
 } from "@/lib/github";
 import { generatePagesProjectName, createPagesProject } from "@/lib/cloudflare/pages";
+import { setPagesEnvVars } from "@/lib/cloudflare/env-vars";
 
 /**
  * GET /api/projects - List all projects for current user
@@ -50,7 +51,7 @@ export async function GET(request) {
 
 /**
  * POST /api/projects - Create new deployment
- * Body: { repoOwner, repoName, defaultBranch }
+ * Body: { repoOwner, repoName, defaultBranch, customSubdomain?, envVars? }
  */
 export async function POST(request) {
   try {
@@ -65,7 +66,13 @@ export async function POST(request) {
     
     // Parse request body
     const body = await request.json();
-    const { repoOwner, repoName, defaultBranch = "main" } = body;
+    const { 
+      repoOwner, 
+      repoName, 
+      defaultBranch = "main",
+      customSubdomain,
+      envVars = []
+    } = body;
     
     if (!repoOwner || !repoName) {
       return Response.json(
@@ -89,8 +96,8 @@ export async function POST(request) {
     console.log(`\n🚀 Starting deployment for ${repoOwner}/${repoName}...`);
     
     // STEP 1: Create Cloudflare Pages project
-    console.log("📦 Step 1/8: Creating Cloudflare Pages project...");
-    const cfProjectName = generatePagesProjectName(repoName);
+    console.log("📦 Step 1/9: Creating Cloudflare Pages project...");
+    const cfProjectName = customSubdomain || generatePagesProjectName(repoName);
     const cfProject = await createPagesProject(
       env.CF_ACCOUNT_ID,
       env.CF_API_TOKEN,
@@ -100,12 +107,12 @@ export async function POST(request) {
     console.log(`   ✅ Created: ${cfProject.subdomain}`);
     
     // STEP 2: Check if workflow already exists
-    console.log("📝 Step 2/8: Checking for existing workflow...");
+    console.log("📝 Step 2/9: Checking for existing workflow...");
     const workflowCheck = await checkWorkflowExists(githubToken, repoOwner, repoName);
     console.log(`   ${workflowCheck.exists ? "⚠️  Found existing workflow" : "✅ No existing workflow"}`);
     
     // STEP 3: Set GitHub secret - ELEVEN_CF_TOKEN
-    console.log("🔐 Step 3/8: Setting ELEVEN_CF_TOKEN secret...");
+    console.log("🔐 Step 3/9: Setting ELEVEN_CF_TOKEN secret...");
     await setRepoSecret(
       githubToken,
       repoOwner,
@@ -116,7 +123,7 @@ export async function POST(request) {
     console.log("   ✅ Secret set");
     
     // STEP 4: Set GitHub secret - ELEVEN_ACCOUNT_ID
-    console.log("🔐 Step 4/8: Setting ELEVEN_ACCOUNT_ID secret...");
+    console.log("🔐 Step 4/9: Setting ELEVEN_ACCOUNT_ID secret...");
     await setRepoSecret(
       githubToken,
       repoOwner,
@@ -126,8 +133,41 @@ export async function POST(request) {
     );
     console.log("   ✅ Secret set");
     
+    // STEP 4.5: Set custom environment variables (both GitHub Secrets + Cloudflare)
+    const customEnvVarKeys = [];
+    if (envVars && envVars.length > 0) {
+      console.log(`🔐 Step 4.5/9: Setting ${envVars.length} custom environment variables...`);
+      
+      // Filter valid env vars
+      const validEnvVars = envVars.filter(v => v.key && v.value);
+      
+      for (const envVar of validEnvVars) {
+        // Set as GitHub Secret (for build-time access)
+        await setRepoSecret(
+          githubToken,
+          repoOwner,
+          repoName,
+          envVar.key,
+          envVar.value
+        );
+        
+        customEnvVarKeys.push(envVar.key);
+      }
+      
+      // Also set in Cloudflare Pages (for runtime access)
+      await setPagesEnvVars(
+        env.CF_ACCOUNT_ID,
+        env.CF_API_TOKEN,
+        cfProjectName,
+        validEnvVars,
+        "production"
+      );
+      
+      console.log(`   ✅ Set ${validEnvVars.length} env vars in GitHub Secrets and Cloudflare Pages`);
+    }
+    
     // STEP 5: Set GitHub variable - ELEVEN_PROJECT_NAME
-    console.log("📌 Step 5/8: Setting ELEVEN_PROJECT_NAME variable...");
+    console.log("📌 Step 5/9: Setting ELEVEN_PROJECT_NAME variable...");
     const varResult = await setRepoVariable(
       githubToken,
       repoOwner,
@@ -137,20 +177,20 @@ export async function POST(request) {
     );
     console.log(`   ✅ Variable ${varResult.action}`);
     
-    // STEP 6: Commit workflow file
-    console.log("📄 Step 6/8: Committing workflow file...");
-    const workflowContent = getWorkflowTemplate(cfProjectName);
+    // STEP 6: Commit workflow file (with custom env vars)
+    console.log("📄 Step 6/9: Committing workflow file...");
+    const workflowContent = getWorkflowTemplate(cfProjectName, customEnvVarKeys);
     const commitResult = await commitWorkflowFile(
       githubToken,
       repoOwner,
       repoName,
       workflowContent,
-      workflowCheck.sha // Pass SHA if updating
+      workflowCheck.sha
     );
     console.log(`   ✅ Workflow ${workflowCheck.exists ? "updated" : "created"}`);
     
     // STEP 7: Save project to database
-    console.log("💾 Step 7/8: Saving project to database...");
+    console.log("💾 Step 7/9: Saving project to database...");
     const project = await createProject(db, {
       userId: user.id,
       name: repoName,
@@ -163,7 +203,7 @@ export async function POST(request) {
     console.log(`   ✅ Project saved with ID: ${project.id}`);
     
     // STEP 8: Invalidate repos cache
-    console.log("♻️  Step 8/8: Invalidating repos cache...");
+    console.log("♻️  Step 8/9: Invalidating repos cache...");
     await invalidateReposCache(db, user.id);
     console.log("   ✅ Cache invalidated");
     
@@ -181,6 +221,7 @@ export async function POST(request) {
         cfProjectName: project.cfProjectName,
         url: `https://${project.cfSubdomain}`,
         workflowUrl: `https://github.com/${repoOwner}/${repoName}/actions`,
+        envVarsSet: customEnvVarKeys.length,
       },
     });
   } catch (error) {
