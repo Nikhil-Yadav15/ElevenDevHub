@@ -1,6 +1,6 @@
 // src/app/api/projects/route.js
 import { getEnv } from "@/lib/cloudflare/env";
-import { getDB, createProject, getProjectsByUserId, findProjectByRepo } from "@/lib/db";
+import { getDB, createProject, getProjectsByUserId, findProjectByRepo, createDeployment  } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { getUserGitHubToken } from "@/lib/auth/token";
 import { invalidateReposCache } from "@/lib/cache/repos";
@@ -10,6 +10,7 @@ import {
   checkWorkflowExists,
   getWorkflowTemplate,
   commitWorkflowFile,
+  getCommitDetails 
 } from "@/lib/github";
 import { generatePagesProjectName, createPagesProject } from "@/lib/cloudflare/pages";
 import { setPagesEnvVars } from "@/lib/cloudflare/env-vars";
@@ -203,11 +204,37 @@ export async function POST(request) {
     console.log(`   ✅ Project saved with ID: ${project.id}`);
     
     // STEP 8: Invalidate repos cache
-    console.log("♻️  Step 8/9: Invalidating repos cache...");
-    await invalidateReposCache(db, user.id);
-    console.log("   ✅ Cache invalidated");
-    
-    console.log(`\n✨ Deployment complete! Workflow will trigger automatically.\n`);
+      console.log("♻️  Step 8/9: Invalidating repos cache...");
+      await invalidateReposCache(db, user.id);
+      console.log("   ✅ Cache invalidated");
+
+      // STEP 9: Track deployment locally
+      console.log("📝 Step 9/9: Creating deployment tracking record...");
+      try {
+        // Get the latest commit details from the branch
+        const { commit } = await getCommitDetails(
+          githubToken,
+          repoOwner,
+          repoName,
+          defaultBranch
+        );
+        
+        // Create deployment record
+        await createDeployment(
+          db,
+          project.id,
+          commit.sha,
+          commit.message,
+          commit.author
+        );
+        
+        console.log(`   ✅ Deployment tracked (SHA: ${commit.sha.slice(0, 7)})`);
+      } catch (error) {
+        console.error("   ⚠️  Failed to track deployment:", error.message);
+        // Don't fail the whole request if tracking fails
+      }
+
+      console.log(`\n✨ Deployment complete! Workflow will trigger automatically.\n`);
     
     // Return success response
     return Response.json({
