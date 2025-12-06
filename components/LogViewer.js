@@ -31,15 +31,16 @@ export default function LogViewer({ projectId, runId, status }) {
   }
   
   // Initial fetch
+  const isPending = runId && runId.toString().startsWith('pending-');
   useEffect(() => {
-    if (isExpanded) {
+  if (isExpanded && !isPending) {
       fetchLogs();
     }
-  }, [isExpanded]);
+  }, [isExpanded, isPending]);
   
   // Poll logs while deployment is active
   useEffect(() => {
-    if (!isExpanded) return;
+    if (!isExpanded || isPending) return; // ✅ Skip if pending
     
     // Clear any existing interval
     if (intervalRef.current) {
@@ -56,7 +57,8 @@ export default function LogViewer({ projectId, runId, status }) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isActive, isExpanded]);
+  }, [isActive, isExpanded, isPending]); // ✅ Add isPending dependency
+
   
   // Auto-scroll to bottom when logs update
   useEffect(() => {
@@ -65,16 +67,22 @@ export default function LogViewer({ projectId, runId, status }) {
     }
   }, [logs, isExpanded]);
   
-  if (!isExpanded) {
-    return (
-      <button
-        onClick={() => setIsExpanded(true)}
-        className="text-sm text-blue-400 hover:text-blue-300 transition mt-3"
-      >
-        📄 View Logs
-      </button>
-    );
-  }
+      if (!isExpanded) {
+      return (
+        <button
+          onClick={() => setIsExpanded(true)}
+          disabled={isPending} // ✅ Disable for pending
+          className={`text-sm transition mt-3 ${
+            isPending 
+              ? 'text-gray-500 cursor-not-allowed' 
+              : 'text-blue-400 hover:text-blue-300'
+          }`}
+        >
+          {isPending ? '⏳ Waiting for GitHub...' : '📄 View Logs'}
+        </button>
+      );
+    }
+
   
   return (
     <div className="mt-4 border border-gray-700 rounded-lg overflow-hidden">
@@ -107,7 +115,14 @@ export default function LogViewer({ projectId, runId, status }) {
       
       {/* Logs Content */}
       <div className="bg-gray-950 p-4 max-h-96 overflow-y-auto font-mono text-xs">
-        {loading ? (
+        {isPending ? (
+          <div className="text-yellow-400">
+            ⏳ Waiting for GitHub Actions to start...
+            <div className="text-gray-400 text-xs mt-2">
+              Logs will appear once the workflow begins (usually 10-15 seconds)
+            </div>
+          </div>
+        ) : loading ? (
           <div className="text-gray-400">Loading logs...</div>
         ) : error ? (
           <div className="text-red-400">Error: {error}</div>
@@ -118,6 +133,7 @@ export default function LogViewer({ projectId, runId, status }) {
         )}
         <div ref={logsEndRef} />
       </div>
+
     </div>
   );
 }

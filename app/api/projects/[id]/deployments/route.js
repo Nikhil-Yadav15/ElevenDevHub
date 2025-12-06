@@ -1,6 +1,6 @@
 // src/app/api/projects/[id]/deployments/route.js
 import { getEnv } from "@/lib/cloudflare/env";
-import { getDB, findProjectById } from "@/lib/db";
+import { getDB, findProjectById, getPendingDeployments, matchDeploymentWithRun, markOrphanedDeployments } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { getUserGitHubToken } from "@/lib/auth/token";
 import { getWorkflowRuns, getCommitDetails } from "@/lib/github";
@@ -16,7 +16,6 @@ export async function GET(request, { params }) {
       return Response.json({ error: "Not authenticated" }, { status: 401 });
     }
     
-    // ✅ FIX: Await params in Next.js 15
     const { id } = await params;
     const project = await findProjectById(db, id);
     
@@ -36,7 +35,7 @@ export async function GET(request, { params }) {
     const forceRefresh = url.searchParams.get("refresh") === "true";
     
     // Fetch deployments with caching
-    const { data: deployments, fromCache } = await getCachedDeployments(
+    const { data: githubRuns, fromCache } = await getCachedDeployments(
       db,
       project.id,
       async () => {
@@ -45,7 +44,7 @@ export async function GET(request, { params }) {
           token,
           project.repoOwner,
           project.repoName,
-          5 // Limit to last 5
+          5
         );
         
         // Enrich with commit details
@@ -64,12 +63,11 @@ export async function GET(request, { params }) {
                 commit: {
                   message: commit.message,
                   author: commit.author,
-                  sha: commit.sha.slice(0, 7), // Short SHA
+                  sha: commit.sha.slice(0, 7),
                   url: commit.url,
                 },
               };
             } catch (error) {
-              // If commit fetch fails, return run without commit details
               return {
                 ...run,
                 commit: {
@@ -87,14 +85,65 @@ export async function GET(request, { params }) {
       }
     );
     
+    // ✅ NEW: Mark old pending deployments as orphaned (>5 minutes)
+    await markOrphanedDeployments(db, project.id);
+    
+    // ✅ NEW: Get pending local deployments
+    const pendingDeployments = await getPendingDeployments(db, project.id);
+    
+    // ✅ NEW: Try to match pending with GitHub runs
+    for (const pending of pendingDeployments) {
+      const matchingRun = githubRuns.find(run => {
+        // Match by SHA (handle both full and short SHA)
+        const runSha = run.headSha.toLowerCase();
+        const pendingSha = pending.commitSha.toLowerCase();
+        return runSha.startsWith(pendingSha) || pendingSha.startsWith(runSha);
+      });
+      
+      if (matchingRun) {
+        console.log(`🔗 Matched deployment ${pending.id} with GitHub run ${matchingRun.id}`);
+        await matchDeploymentWithRun(
+          db,
+          project.id,
+          matchingRun.id,
+          pending.commitSha,
+          matchingRun.status,
+          matchingRun.conclusion
+        );
+      }
+    }
+    
+    // ✅ NEW: Refresh pending list after matching
+    const stillPending = await getPendingDeployments(db, project.id);
+    
+    // ✅ NEW: Convert pending deployments to deployment card format
+    const pendingCards = stillPending.map(pending => ({
+      id: `pending-${pending.id}`, // Unique ID for pending
+      status: 'queued',
+      conclusion: null,
+      headSha: pending.commitSha,
+      createdAt: pending.triggeredAt.toISOString(),
+      updatedAt: pending.updatedAt.toISOString(),
+      url: `https://github.com/${project.repoOwner}/${project.repoName}/actions`,
+      commit: {
+        message: pending.commitMessage || "Deployment triggered",
+        author: pending.commitAuthor || "Unknown",
+        sha: pending.commitSha?.slice(0, 7) || "unknown",
+        url: `https://github.com/${project.repoOwner}/${project.repoName}/commit/${pending.commitSha}`,
+      },
+    }));
+    
+    // ✅ NEW: Merge pending with GitHub runs (pending first)
+    const allDeployments = [...pendingCards, ...githubRuns];
+    
     // Determine if we should keep polling
-    const hasActiveDeployment = deployments.some(
+    const hasActiveDeployment = allDeployments.some(
       d => d.status === 'queued' || d.status === 'in_progress'
     );
     
     return Response.json({
       success: true,
-      deployments,
+      deployments: allDeployments,
       fromCache,
       hasActiveDeployment,
       project: {
@@ -109,3 +158,4 @@ export async function GET(request, { params }) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
