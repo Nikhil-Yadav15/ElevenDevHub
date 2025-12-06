@@ -16,7 +16,8 @@ export async function GET(request, { params }) {
       return Response.json({ error: "Not authenticated" }, { status: 401 });
     }
     
-    const { id } = params;
+    // ✅ FIX: Await params in Next.js 15
+    const { id } = await params;
     const project = await findProjectById(db, id);
     
     if (!project) {
@@ -64,7 +65,8 @@ export async function DELETE(request, { params }) {
       return Response.json({ error: "Not authenticated" }, { status: 401 });
     }
     
-    const { id } = params;
+    // ✅ FIX: Await params in Next.js 15
+    const { id } = await params;
     const project = await findProjectById(db, id);
     
     if (!project) {
