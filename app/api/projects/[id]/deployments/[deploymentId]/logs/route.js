@@ -1,4 +1,4 @@
-// src/app/api/projects/[id]/deployments/[runId]/logs/route.js
+// src/app/api/projects/[id]/deployments/[deploymentId]/logs/route.js
 import { getEnv } from "@/lib/cloudflare/env";
 import { getDB, findProjectById } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
@@ -16,7 +16,7 @@ export async function GET(request, { params }) {
     }
     
     // Await params in Next.js 15
-    const { id, runId } = await params;
+    const { id, deploymentId } = await params;
     const project = await findProjectById(db, id);
     
     if (!project) {
@@ -35,7 +35,7 @@ export async function GET(request, { params }) {
       token,
       project.repoOwner,
       project.repoName,
-      runId
+      deploymentId
     );
     
     if (jobs.length === 0) {

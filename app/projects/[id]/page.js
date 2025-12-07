@@ -217,11 +217,11 @@ export default function ProjectDetail() {
             </div>
           ) : (
             <div className="space-y-3">
-              {deployments.map((deployment, index) => (
+              {deployments.map((deployment) => (
                 <DeploymentCard
                   key={deployment.id}
                   deployment={deployment}
-                  isLatest={index === 0}
+                  isLive={deployment.isLive}
                   projectId={project.id}
                 />
               ))}
@@ -233,7 +233,36 @@ export default function ProjectDetail() {
   );
 }
 
-function DeploymentCard({ deployment, isLatest, projectId }) {
+function DeploymentCard({ deployment, isLive, projectId }) {
+  const [rolling, setRolling] = useState(false);
+  
+  async function handleRollback() {
+    if (!confirm(`🔄 Rollback to this deployment?\n\n"${deployment.commit.message.split("\n")[0]}"\n\nThis will make it your live production deployment.`)) {
+      return;
+    }
+    
+    setRolling(true);
+    
+    try {
+      const res = await fetch(`/api/projects/${projectId}/deployments/${deployment.id}/rollback`, {
+        method: "POST",
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to rollback");
+      }
+      
+      alert("✅ Rollback successful! Page will refresh...");
+      window.location.reload();
+    } catch (err) {
+      alert(`❌ Rollback failed: ${err.message}`);
+    } finally {
+      setRolling(false);
+    }
+  }
+  
   const statusConfig = {
     queued: {
       color: "yellow",
@@ -294,7 +323,7 @@ function DeploymentCard({ deployment, isLatest, projectId }) {
   return (
     <div
       className={`border ${config.border} ${config.bg} rounded-lg p-4 ${
-        isLatest ? "ring-2 ring-blue-500/20" : ""
+        isLive ? "ring-2 ring-blue-500/20" : ""
       }`}
     >
       <div className="flex items-start justify-between mb-3">
@@ -304,18 +333,34 @@ function DeploymentCard({ deployment, isLatest, projectId }) {
           >
             {config.icon} {config.label}
           </span>
+          {isLive && (
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+              🟢 LIVE
+            </span>
+          )}
           <span className="text-sm text-gray-400">
             {formatTimestamp(deployment.createdAt)}
           </span>
         </div>
-        <a
-          href={deployment.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-gray-400 hover:text-blue-400 transition"
-        >
-          View →
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href={deployment.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-gray-400 hover:text-blue-400 transition"
+          >
+            View →
+          </a>
+          {!isLive && deployment.status === "completed" && deployment.conclusion === "success" && (
+            <button
+              onClick={handleRollback}
+              disabled={rolling}
+              className="px-3 py-1 text-xs font-medium bg-purple-600 hover:bg-purple-500 text-white rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {rolling ? "Rolling back..." : "🔄 Rollback"}
+            </button>
+          )}
+        </div>
       </div>
       
       <div className="mb-2">

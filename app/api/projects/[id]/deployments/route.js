@@ -1,6 +1,7 @@
 // src/app/api/projects/[id]/deployments/route.js
 import { getEnv } from "@/lib/cloudflare/env";
-import { getDB, findProjectById, getPendingDeployments, matchDeploymentWithRun, markOrphanedDeployments } from "@/lib/db";
+import { getDB, findProjectById, getPendingDeployments, matchDeploymentWithRun, markOrphanedDeployments, upsertDeployment } from "@/lib/db";
+import { markDeploymentAsLive } from "@/lib/db/deployments";
 import { getCurrentUser } from "@/lib/auth";
 import { getUserGitHubToken } from "@/lib/auth/token";
 import { getWorkflowRuns, getCommitDetails } from "@/lib/github";
@@ -85,6 +86,27 @@ export async function GET(request, { params }) {
       }
     );
     
+    // 🔄 SYNC: Persist GitHub workflow runs to database
+    console.log(`🔄 Syncing ${githubRuns.length} GitHub deployments to database...`);
+    for (const run of githubRuns) {
+      try {
+        await upsertDeployment(db, {
+          projectId: project.id,
+          githubRunId: String(run.id), // GitHub run ID
+          commitSha: run.headSha,
+          commitMessage: run.commit?.message || null,
+          commitAuthor: run.commit?.author || null,
+          runStatus: run.status, // "queued", "in_progress", "completed"
+          conclusion: run.conclusion, // "success", "failure", "cancelled", or null
+          deploymentStatus: 'matched', // Already synced from GitHub
+          triggeredAt: new Date(run.createdAt),
+        });
+        console.log(`✅ Synced deployment: github_run_id=${run.id}, status=${run.status}, conclusion=${run.conclusion}`);
+      } catch (error) {
+        console.error(`❌ Failed to sync deployment ${run.id}:`, error);
+      }
+    }
+    
     // ✅ NEW: Mark old pending deployments as orphaned (>5 minutes)
     await markOrphanedDeployments(db, project.id);
     
@@ -136,14 +158,56 @@ export async function GET(request, { params }) {
     // ✅ NEW: Merge pending with GitHub runs (pending first)
     const allDeployments = [...pendingCards, ...githubRuns];
     
+    // Get live deployment from database
+    const { findDeploymentByRunId } = await import("@/lib/db/helpers");
+    const deploymentsWithLiveStatus = await Promise.all(
+      allDeployments.map(async (d) => {
+        // Skip pending deployments
+        if (typeof d.id === 'string' && d.id.startsWith('pending-')) {
+          return { ...d, isLive: false };
+        }
+        
+        // Check if this deployment is marked as live in DB
+        const dbDeployment = await findDeploymentByRunId(db, String(d.id));
+        const isLive = dbDeployment?.deploymentStatus === 'live';
+        
+        if (isLive) {
+          console.log(`🟢 Found LIVE deployment: github_run_id=${d.id}, commit=${dbDeployment.commitSha?.slice(0, 7)}`);
+        }
+        
+        return {
+          ...d,
+          isLive,
+        };
+      })
+    );
+    
+    // If no deployment is marked as live, mark the most recent successful one as live
+    const hasLiveDeployment = deploymentsWithLiveStatus.some(d => d.isLive);
+    if (!hasLiveDeployment) {
+      console.log(`⚠️ No deployment marked as live, marking most recent successful one...`);
+      const mostRecentSuccess = deploymentsWithLiveStatus.find(
+        d => d.status === 'completed' && d.conclusion === 'success' && typeof d.id === 'number'
+      );
+      
+      if (mostRecentSuccess) {
+        const dbDeployment = await findDeploymentByRunId(db, String(mostRecentSuccess.id));
+        if (dbDeployment) {
+          await markDeploymentAsLive(db, project.id, dbDeployment.id);
+          mostRecentSuccess.isLive = true;
+          console.log(`✅ Marked deployment as live: github_run_id=${mostRecentSuccess.id}`);
+        }
+      }
+    }
+    
     // Determine if we should keep polling
-    const hasActiveDeployment = allDeployments.some(
+    const hasActiveDeployment = deploymentsWithLiveStatus.some(
       d => d.status === 'queued' || d.status === 'in_progress'
     );
     
     return Response.json({
       success: true,
-      deployments: allDeployments,
+      deployments: deploymentsWithLiveStatus,
       fromCache,
       hasActiveDeployment,
       project: {

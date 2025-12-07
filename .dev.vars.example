@@ -1,0 +1,44 @@
+# Environment Variables Template
+# Copy this file to .dev.vars and fill in your actual values
+
+# ===========================
+# GitHub OAuth Configuration
+# ===========================
+# Get these from: https://github.com/settings/developers
+# 1. Create new OAuth App
+# 2. Homepage: http://localhost:3000
+# 3. Callback: http://localhost:3000/api/auth/callback
+
+GITHUB_CLIENT_ID=your_github_oauth_client_id
+GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
+GITHUB_REDIRECT_URI=http://localhost:3000/api/auth/callback
+
+# ===========================
+# Cloudflare Configuration
+# ===========================
+# Account ID: Found in Cloudflare dashboard URL
+# API Token: Create at https://dash.cloudflare.com/profile/api-tokens
+# Required permissions: Cloudflare Pages:Edit, D1:Edit
+
+CF_ACCOUNT_ID=your_cloudflare_account_id
+CF_API_TOKEN=your_cloudflare_api_token
+
+# ===========================
+# OpenRouter API (AI Features)
+# ===========================
+# Get API key from: https://openrouter.ai/keys
+
+OPENROUTER_API_KEY=your_openrouter_api_key
+
+# ===========================
+# Session Secret
+# ===========================
+# Generate a random string (minimum 32 characters)
+# You can use: openssl rand -base64 32
+
+SESSION_SECRET=your-random-session-secret-minimum-32-characters
+
+# ===========================
+# Node Environment
+# ===========================
+NODE_ENV=development

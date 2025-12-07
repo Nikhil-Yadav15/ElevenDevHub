@@ -1,4 +1,4 @@
-// src/app/api/projects/[id]/deployments/[runId]/analyze/route.js
+// src/app/api/projects/[id]/deployments/[deploymentId]/analyze/route.js
 import { getEnv } from "@/lib/cloudflare/env";
 import { getDB, findProjectById } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
@@ -17,7 +17,7 @@ export async function POST(request, { params }) {
     }
     
     // Await params in Next.js 15
-    const { id, runId } = await params;
+    const { id, deploymentId } = await params;
     const project = await findProjectById(db, id);
     
     if (!project) {
@@ -31,14 +31,14 @@ export async function POST(request, { params }) {
     
     const token = await getUserGitHubToken(db, user.id, env.ENCRYPTION_SECRET);
     
-    console.log(`🤖 Starting AI analysis for deployment ${runId}...`);
+    console.log(`🤖 Starting AI analysis for deployment ${deploymentId}...`);
     
     // Get jobs for this workflow run
     const { jobs } = await getWorkflowJobs(
       token,
       project.repoOwner,
       project.repoName,
-      runId
+      deploymentId
     );
     
     if (jobs.length === 0) {
