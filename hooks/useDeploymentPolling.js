@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
  * Smart polling hook for deployment status
  * - Queued: Poll every 15 seconds
  * - In Progress: Poll every 10 seconds
- * - Completed/Failed: Stop polling
+ * - Completed/Failed ...stop polling 
  */
 export function useDeploymentPolling(projectId) {
   const [deployments, setDeployments] = useState([]);
