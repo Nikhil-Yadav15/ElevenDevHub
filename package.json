@@ -20,6 +20,7 @@
     "canvas-confetti": "^1.9.4",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.0",
+    "jszip": "^3.10.1",
     "libsodium-wrappers": "^0.7.15",
     "next": "16.0.7",
     "react": "19.2.0",

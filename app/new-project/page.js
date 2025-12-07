@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import JSZip from "jszip";
 
 export default function NewProject() {
   const router = useRouter();
@@ -101,7 +102,7 @@ function ProjectTypeSelector({ onSelect }) {
 
 function CreateNewProject({ onBack }) {
   const router = useRouter();
-  const [step, setStep] = useState(1); // 1: repo details, 2: template/upload
+  const [step, setStep] = useState(1); // 1: repo details, 2: template/upload, 3: files
   const [loading, setLoading] = useState(false);
   
   // Step 1: Repository details
@@ -109,8 +110,13 @@ function CreateNewProject({ onBack }) {
   const [description, setDescription] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   
-  // Step 2: Template or upload
+  // Step 2: Template or upload mode
+  const [mode, setMode] = useState(null); // 'template' or 'upload'
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  
+  // Step 3: File uploads
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [dragActive, setDragActive] = useState(false);
   
   const templates = [
     { id: "static-html", name: "Static HTML Site", icon: "🌐", description: "Simple HTML, CSS, JS" },
@@ -118,24 +124,129 @@ function CreateNewProject({ onBack }) {
     { id: "nextjs", name: "Next.js App", icon: "▲", description: "Next.js with App Router" },
   ];
   
+  function handleDrag(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  }
+  
+  function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
+  }
+  
+  function handleFileInput(e) {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFiles(e.target.files);
+    }
+  }
+  
+  function handleFolderInput(e) {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFiles(e.target.files);
+    }
+  }
+  
+  async function handleZipInput(e) {
+    if (e.target.files && e.target.files.length > 0) {
+      const zipFile = e.target.files[0];
+      try {
+        const zip = new JSZip();
+        const contents = await zip.loadAsync(zipFile);
+        
+        const extractedFiles = [];
+        for (const [path, file] of Object.entries(contents.files)) {
+          if (!file.dir) {
+            const content = await file.async('text');
+            extractedFiles.push({
+              name: path.split('/').pop(),
+              path: path,
+              content: content,
+              size: content.length,
+            });
+          }
+        }
+        
+        setUploadedFiles(prev => [...prev, ...extractedFiles]);
+      } catch (error) {
+        console.error('Error extracting zip:', error);
+        alert('Failed to extract zip file. Please make sure it\'s a valid zip archive.');
+      }
+    }
+  }
+  
+  async function handleFiles(files) {
+    const fileArray = Array.from(files);
+    const filePromises = fileArray.map(file => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          resolve({
+            name: file.name,
+            path: file.webkitRelativePath || file.name,
+            content: e.target.result,
+            size: file.size,
+          });
+        };
+        reader.readAsText(file);
+      });
+    });
+    
+    const readFiles = await Promise.all(filePromises);
+    setUploadedFiles(prev => [...prev, ...readFiles]);
+  }
+  
+  function removeFile(index) {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  }
+  
   async function handleCreateRepo() {
     if (!repoName.trim()) {
       alert("Please enter a repository name");
       return;
     }
     
+    if (mode === 'template' && !selectedTemplate) {
+      alert("Please select a template");
+      return;
+    }
+    
+    if (mode === 'upload' && uploadedFiles.length === 0) {
+      alert("Please upload at least one file");
+      return;
+    }
+    
     setLoading(true);
     
     try {
+      const body = {
+        name: repoName,
+        description,
+        isPrivate,
+      };
+      
+      if (mode === 'template') {
+        body.templateId = selectedTemplate;
+      } else if (mode === 'upload') {
+        body.files = uploadedFiles.map(f => ({
+          path: f.path,
+          content: f.content,
+        }));
+      }
+      
       const res = await fetch("/api/repos/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: repoName,
-          description,
-          isPrivate,
-          templateId: selectedTemplate,
-        }),
+        body: JSON.stringify(body),
       });
       
       const data = await res.json();
@@ -177,14 +288,21 @@ function CreateNewProject({ onBack }) {
             <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-800'}`}>
               1
             </div>
-            <span className="ml-2">Repository Details</span>
+            <span className="ml-2 hidden sm:inline">Repository Details</span>
           </div>
-          <div className="w-16 h-0.5 bg-gray-800 mx-4"></div>
+          <div className="w-12 h-0.5 bg-gray-800 mx-2"></div>
           <div className={`flex items-center ${step >= 2 ? 'text-purple-500' : 'text-gray-600'}`}>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step >= 2 ? 'bg-purple-500 text-white' : 'bg-gray-800'}`}>
               2
             </div>
-            <span className="ml-2">Choose Template</span>
+            <span className="ml-2 hidden sm:inline">Select Mode</span>
+          </div>
+          <div className="w-12 h-0.5 bg-gray-800 mx-2"></div>
+          <div className={`flex items-center ${step >= 3 ? 'text-green-500' : 'text-gray-600'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step >= 3 ? 'bg-green-500 text-white' : 'bg-gray-800'}`}>
+              3
+            </div>
+            <span className="ml-2 hidden sm:inline">Files</span>
           </div>
         </div>
         
@@ -250,6 +368,59 @@ function CreateNewProject({ onBack }) {
         
         {step === 2 && (
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-8">
+            <h2 className="text-xl font-bold text-white mb-6">How would you like to add files?</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <button
+                onClick={() => { setMode('template'); setStep(3); }}
+                className="group p-8 border-2 border-gray-800 rounded-lg hover:border-purple-500 transition text-left"
+              >
+                <div className="text-5xl mb-4">📋</div>
+                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-purple-400 transition">
+                  Use Template
+                </h3>
+                <p className="text-gray-400 mb-4">
+                  Start with a pre-configured template
+                </p>
+                <ul className="text-sm text-gray-500 space-y-1">
+                  <li>✓ Quick setup</li>
+                  <li>✓ Best practices</li>
+                  <li>✓ Working examples</li>
+                </ul>
+              </button>
+              
+              <button
+                onClick={() => { setMode('upload'); setStep(3); }}
+                className="group p-8 border-2 border-gray-800 rounded-lg hover:border-green-500 transition text-left"
+              >
+                <div className="text-5xl mb-4">📤</div>
+                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-green-400 transition">
+                  Upload Files
+                </h3>
+                <p className="text-gray-400 mb-4">
+                  Upload your own project files
+                </p>
+                <ul className="text-sm text-gray-500 space-y-1">
+                  <li>✓ Drag & drop</li>
+                  <li>✓ Multiple files</li>
+                  <li>✓ Full control</li>
+                </ul>
+              </button>
+            </div>
+            
+            <div className="flex justify-start">
+              <button
+                onClick={() => setStep(1)}
+                className="text-gray-400 hover:text-white transition"
+              >
+                ← Back
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {step === 3 && mode === 'template' && (
+          <div className="bg-gray-900 border border-gray-800 rounded-lg p-8">
             <h2 className="text-xl font-bold text-white mb-6">Choose a Template</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -272,7 +443,7 @@ function CreateNewProject({ onBack }) {
             
             <div className="mt-8 flex justify-between">
               <button
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
                 className="text-gray-400 hover:text-white transition"
               >
                 ← Back
@@ -283,6 +454,132 @@ function CreateNewProject({ onBack }) {
                 className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Creating..." : "Create & Deploy →"}
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {step === 3 && mode === 'upload' && (
+          <div className="bg-gray-900 border border-gray-800 rounded-lg p-8">
+            <h2 className="text-xl font-bold text-white mb-6">Upload Your Files</h2>
+            
+            {/* Drag & Drop Zone */}
+            <div
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-lg p-12 text-center transition ${
+                dragActive 
+                  ? 'border-green-500 bg-green-500/10' 
+                  : 'border-gray-700 hover:border-gray-600'
+              }`}
+            >
+              <div className="text-6xl mb-4">📁</div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                Drag & Drop Files or Folders Here
+              </h3>
+              <p className="text-gray-400 mb-4">
+                or click to browse
+              </p>
+              <div className="flex gap-3 justify-center flex-wrap">
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileInput}
+                  className="hidden"
+                  id="fileInput"
+                />
+                <label
+                  htmlFor="fileInput"
+                  className="inline-block bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-medium cursor-pointer transition"
+                >
+                  📄 Choose Files
+                </label>
+                
+                <input
+                  type="file"
+                  webkitdirectory=""
+                  directory=""
+                  multiple
+                  onChange={handleFolderInput}
+                  className="hidden"
+                  id="folderInput"
+                />
+                <label
+                  htmlFor="folderInput"
+                  className="inline-block bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-medium cursor-pointer transition"
+                >
+                  📂 Choose Folder
+                </label>
+                
+                <input
+                  type="file"
+                  accept=".zip"
+                  onChange={handleZipInput}
+                  className="hidden"
+                  id="zipInput"
+                />
+                <label
+                  htmlFor="zipInput"
+                  className="inline-block bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg font-medium cursor-pointer transition"
+                >
+                  🗜️ Upload ZIP
+                </label>
+              </div>
+              <p className="text-xs text-gray-500 mt-4">
+                Supports: Individual files, folders, or ZIP archives
+              </p>
+            </div>
+            
+            {/* Uploaded Files List */}
+            {uploadedFiles.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-bold text-white mb-3">
+                  Uploaded Files ({uploadedFiles.length})
+                </h3>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {uploadedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-3"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <span className="text-2xl">📄</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-medium truncate">
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {(file.size / 1024).toFixed(2)} KB
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeFile(index)}
+                        className="text-red-400 hover:text-red-300 transition ml-4"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div className="mt-8 flex justify-between">
+              <button
+                onClick={() => setStep(2)}
+                className="text-gray-400 hover:text-white transition"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={handleCreateRepo}
+                disabled={loading || uploadedFiles.length === 0}
+                className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "Creating..." : `Create & Deploy (${uploadedFiles.length} files) →`}
               </button>
             </div>
           </div>
