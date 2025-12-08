@@ -10,6 +10,8 @@ export default function ConfigureProject() {
   const searchParams = useSearchParams();
   const owner = searchParams.get("owner");
   const name = searchParams.get("name");
+  const projectType = searchParams.get("projectType") || "frontend";
+  const framework = searchParams.get("framework") || "";
   
   const [loading, setLoading] = useState(false);
   const [branch, setBranch] = useState("main");
@@ -37,6 +39,8 @@ export default function ConfigureProject() {
           defaultBranch: branch,
           customSubdomain: customSubdomain || undefined,
           envVars: envVars.filter(v => v.key && v.value),
+          projectType,
+          framework,
         }),
       });
       
@@ -100,6 +104,37 @@ export default function ConfigureProject() {
             </div>
           </div>
           
+          {/* Project Type Info */}
+          <div className="mb-8">
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              Project Type
+            </label>
+            <div className={`inline-flex items-center gap-3 px-4 py-2 rounded-lg ${
+              projectType === 'frontend' 
+                ? 'bg-blue-500/10 border border-blue-500/30' 
+                : 'bg-purple-500/10 border border-purple-500/30'
+            }`}>
+              <span className="text-2xl">
+                {projectType === 'frontend' ? '🌐' : '⚙️'}
+              </span>
+              <div>
+                <span className={`font-semibold ${
+                  projectType === 'frontend' ? 'text-blue-400' : 'text-purple-400'
+                }`}>
+                  {projectType === 'frontend' ? 'Frontend' : 'Backend'}
+                </span>
+                {framework && (
+                  <span className="text-gray-400 ml-2">• {framework}</span>
+                )}
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              {projectType === 'frontend' 
+                ? 'Will be deployed to Cloudflare Pages' 
+                : 'Will be deployed to Railway/Render'}
+            </p>
+          </div>
+          
           {/* Branch Selection */}
           <div className="mb-8">
             <label className="block text-sm font-medium text-gray-400 mb-2">
@@ -118,25 +153,27 @@ export default function ConfigureProject() {
             </p>
           </div>
           
-          {/* Custom Subdomain (Optional) */}
-          <div className="mb-8">
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              Custom Subdomain (Optional)
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={customSubdomain}
-                onChange={(e) => setCustomSubdomain(e.target.value.toLowerCase())}
-                placeholder="my-custom-name"
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-              />
-              <span className="text-gray-400">.pages.dev</span>
+          {/* Custom Subdomain (Optional) - Only for Frontend */}
+          {projectType === 'frontend' && (
+            <div className="mb-8">
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                Custom Subdomain (Optional)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={customSubdomain}
+                  onChange={(e) => setCustomSubdomain(e.target.value.toLowerCase())}
+                  placeholder="my-custom-name"
+                  className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                />
+                <span className="text-gray-400">.pages.dev</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Leave empty for auto-generated subdomain
+              </p>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Leave empty for auto-generated subdomain
-            </p>
-          </div>
+          )}
           
           {/* Environment Variables */}
           <div className="mb-8">
