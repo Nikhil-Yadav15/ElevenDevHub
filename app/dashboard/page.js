@@ -17,6 +17,13 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  // Bulk invite state
+  const [showBulkInvite, setShowBulkInvite] = useState(false);
+  const [bulkUsername, setBulkUsername] = useState("");
+  const [bulkRole, setBulkRole] = useState("viewer");
+  const [bulkInviting, setBulkInviting] = useState(false);
+  const [bulkResult, setBulkResult] = useState(null);
+  
   useEffect(() => {
     loadDashboard();
   }, []);
@@ -64,6 +71,48 @@ export default function Dashboard() {
     setProjects(projects.filter(p => p.id !== projectId));
     loadDashboard(); // Refresh status here 
   };
+  
+  // Bulk invite handler
+  async function handleBulkInvite(e) {
+    e.preventDefault();
+    
+    if (!bulkUsername.trim()) {
+      alert("Please enter a username");
+      return;
+    }
+    
+    setBulkInviting(true);
+    setBulkResult(null);
+    
+    try {
+      const res = await fetch("/api/projects/bulk-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: bulkUsername.trim(),
+          role: bulkRole,
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to invite user");
+      }
+      
+      setBulkResult(data);
+      setBulkUsername("");
+      
+      // Refresh dashboard after successful invite
+      setTimeout(() => {
+        loadDashboard();
+      }, 1000);
+    } catch (err) {
+      alert(`❌ ${err.message}`);
+    } finally {
+      setBulkInviting(false);
+    }
+  }
   
   if (loading) {
     return (
@@ -123,6 +172,136 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+        
+        {/* Bulk Invite Section */}
+        {projects.some(p => p.isOwner) && (
+          <div className="mb-8">
+            <button
+              onClick={() => setShowBulkInvite(!showBulkInvite)}
+              className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2"
+            >
+              <span>👥</span>
+              <span>{showBulkInvite ? "Hide" : "Bulk Invite Collaborator"}</span>
+            </button>
+            
+            {showBulkInvite && (
+              <div className="mt-4 bg-gray-900 border border-gray-800 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  Invite Collaborator to All Projects
+                </h3>
+                <p className="text-sm text-gray-400 mb-4">
+                  Add a team member to all projects you own at once.
+                </p>
+                
+                <form onSubmit={handleBulkInvite} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      GitHub Username
+                    </label>
+                    <input
+                      type="text"
+                      value={bulkUsername}
+                      onChange={(e) => setBulkUsername(e.target.value)}
+                      placeholder="username"
+                      disabled={bulkInviting}
+                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Role
+                    </label>
+                    <select
+                      value={bulkRole}
+                      onChange={(e) => setBulkRole(e.target.value)}
+                      disabled={bulkInviting}
+                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="viewer">Viewer - View only</option>
+                      <option value="maintainer">Maintainer - Can deploy & manage</option>
+                    </select>
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={bulkInviting || !bulkUsername.trim()}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-semibold transition"
+                  >
+                    {bulkInviting ? "Inviting..." : "Invite to All Projects"}
+                  </button>
+                </form>
+                
+                {bulkResult && (
+                  <div className="mt-4 space-y-3">
+                    <div className="p-4 bg-green-900/20 border border-green-600/30 rounded-lg">
+                      <div className="text-green-400 font-medium mb-2">
+                        ✅ {bulkResult.message}
+                      </div>
+                      <div className="text-sm text-gray-300 space-y-1">
+                        <div>Total projects: {bulkResult.results.total}</div>
+                        <div>✅ Successfully invited: {bulkResult.results.succeeded}</div>
+                        {bulkResult.results.skipped > 0 && (
+                          <div>⏭️ Skipped (already member): {bulkResult.results.skipped}</div>
+                        )}
+                        {bulkResult.results.failed > 0 && (
+                          <div className="text-red-400">❌ Failed: {bulkResult.results.failed}</div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Show successful invites */}
+                    {bulkResult.details.succeeded.length > 0 && (
+                      <details className="bg-gray-800 rounded-lg p-3">
+                        <summary className="cursor-pointer text-sm text-green-400 font-medium">
+                          ✅ Successfully Invited ({bulkResult.details.succeeded.length})
+                        </summary>
+                        <ul className="mt-2 space-y-1 text-xs text-gray-300 ml-4">
+                          {bulkResult.details.succeeded.map((item) => (
+                            <li key={item.projectId}>• {item.projectName}</li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+                    
+                    {/* Show skipped projects */}
+                    {bulkResult.details.skipped.length > 0 && (
+                      <details className="bg-gray-800 rounded-lg p-3">
+                        <summary className="cursor-pointer text-sm text-yellow-400 font-medium">
+                          ⏭️ Skipped ({bulkResult.details.skipped.length})
+                        </summary>
+                        <ul className="mt-2 space-y-1 text-xs text-gray-300 ml-4">
+                          {bulkResult.details.skipped.map((item) => (
+                            <li key={item.projectId}>
+                              • {item.projectName} - {item.reason}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+                    
+                    {/* Show failed invites */}
+                    {bulkResult.details.failed.length > 0 && (
+                      <details open className="bg-red-900/20 border border-red-600/30 rounded-lg p-3">
+                        <summary className="cursor-pointer text-sm text-red-400 font-medium">
+                          ❌ Failed ({bulkResult.details.failed.length})
+                        </summary>
+                        <ul className="mt-2 space-y-2 text-xs text-gray-300 ml-4">
+                          {bulkResult.details.failed.map((item) => (
+                            <li key={item.projectId}>
+                              <div className="font-medium text-white">• {item.projectName}</div>
+                              <div className="text-red-400 ml-3">Error: {item.error}</div>
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         
         {/* Projects Header */}
         <div className="flex items-center justify-between mb-6">
