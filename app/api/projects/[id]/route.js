@@ -2,6 +2,7 @@
 import { getEnv } from "@/lib/cloudflare/env";
 import { getDB, findProjectById, deleteProject } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { hasPermission } from "@/lib/db/project-members";
 
 /**
  * GET /api/projects/[id] - Get single project details
@@ -24,8 +25,11 @@ export async function GET(request, { params }) {
       return Response.json({ error: "Project not found" }, { status: 404 });
     }
     
-    // Verify ownership
-    if (project.userId !== user.id) {
+    // Check if user is owner or has viewer permission (minimum access)
+    const isOwner = project.userId === user.id;
+    const isMember = await hasPermission(db, id, user.id, "viewer");
+    
+    if (!isOwner && !isMember) {
       return Response.json({ error: "Forbidden" }, { status: 403 });
     }
     

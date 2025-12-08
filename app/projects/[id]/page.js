@@ -118,6 +118,12 @@ export default function ProjectDetail() {
               </a>
             </div>
             <div className="flex items-center gap-4">
+              <Link
+                href={`/projects/${project.id}/team`}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition text-sm"
+              >
+                👥 Team
+              </Link>
               <button
                 onClick={handleDeleteProject}
                 disabled={deleting}

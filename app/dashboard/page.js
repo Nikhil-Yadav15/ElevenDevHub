@@ -205,22 +205,31 @@ function ProjectCard({ project, onDelete }) {
     >
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-white mb-1">
-            {project.name}
-          </h3>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-lg font-semibold text-white">
+              {project.name}
+            </h3>
+            {!project.isOwner && (
+              <span className="px-2 py-0.5 bg-purple-600/20 text-purple-400 text-xs rounded border border-purple-600/30">
+                Shared
+              </span>
+            )}
+          </div>
           <div className="text-sm text-gray-400">
             {project.repoOwner}/{project.repoName}
           </div>
         </div>
         <div className="flex items-center gap-2">
           <StatusBadge status="success" />
-          <button
-            onClick={handleDelete}
-            className="delete-button text-red-400 hover:text-red-300 transition text-sm"
-            title="Delete project"
-          >
-            🗑️
-          </button>
+          {project.isOwner && (
+            <button
+              onClick={handleDelete}
+              className="delete-button text-red-400 hover:text-red-300 transition text-sm"
+              title="Delete project"
+            >
+              🗑️
+            </button>
+          )}
         </div>
       </div>
       

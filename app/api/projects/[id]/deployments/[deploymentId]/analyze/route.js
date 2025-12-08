@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getUserGitHubToken } from "@/lib/auth/token";
 import { getWorkflowJobs } from "@/lib/github";
 import { analyzeBuildFailure } from "@/lib/ai/openrouter";
+import { hasPermission } from "@/lib/db/project-members";
 
 export async function POST(request, { params }) {
   try {
@@ -24,12 +25,16 @@ export async function POST(request, { params }) {
       return Response.json({ error: "Project not found" }, { status: 404 });
     }
     
-    // Verify ownership
-    if (project.userId !== user.id) {
+    // Check if user is owner or has viewer permission (minimum access)
+    const isOwner = project.userId === user.id;
+    const isMember = await hasPermission(db, id, user.id, "viewer");
+    
+    if (!isOwner && !isMember) {
       return Response.json({ error: "Forbidden" }, { status: 403 });
     }
     
-    const token = await getUserGitHubToken(db, user.id, env.ENCRYPTION_SECRET);
+    // Use owner's token (not current user's)
+    const token = await getUserGitHubToken(db, project.userId, env.ENCRYPTION_SECRET);
     
     console.log(`🤖 Starting AI analysis for deployment ${deploymentId}...`);
     

@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getDeploymentById, markDeploymentAsLive } from "@/lib/db/deployments";
 import { findProjectById } from "@/lib/db/helpers";
 import { promoteDeployment, getPagesDeployments } from "@/lib/cloudflare/pages";
+import { hasPermission } from "@/lib/db/project-members";
 
 export async function POST(request, { params }) {
   try {
@@ -33,10 +34,13 @@ export async function POST(request, { params }) {
       );
     }
     
-    // Verify project ownership
-    if (project.userId !== user.id) {
+    // Check if user is owner or maintainer (rollback requires maintainer permission)
+    const isOwner = project.userId === user.id;
+    const isMaintainer = await hasPermission(db, projectId, user.id, "maintainer");
+    
+    if (!isOwner && !isMaintainer) {
       return NextResponse.json(
-        { error: "Forbidden" },
+        { error: "Forbidden - Requires maintainer permission" },
         { status: 403 }
       );
     }

@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getUserGitHubToken } from "@/lib/auth/token";
 import { getWorkflowRuns, getCommitDetails } from "@/lib/github";
 import { getCachedDeployments } from "@/lib/cache/deployments";
+import { hasPermission } from "@/lib/db/project-members";
 
 export async function GET(request, { params }) {
   try {
@@ -24,12 +25,17 @@ export async function GET(request, { params }) {
       return Response.json({ error: "Project not found" }, { status: 404 });
     }
     
-    // Verify ownership
-    if (project.userId !== user.id) {
+    // Check if user is owner or has viewer permission (minimum access)
+    const isOwner = project.userId === user.id;
+    const isMember = await hasPermission(db, id, user.id, "viewer");
+    
+    if (!isOwner && !isMember) {
       return Response.json({ error: "Forbidden" }, { status: 403 });
     }
     
-    const token = await getUserGitHubToken(db, user.id, env.ENCRYPTION_SECRET);
+    // Get token from project owner (not current user) since they have the GitHub access
+    const ownerId = project.userId;
+    const token = await getUserGitHubToken(db, ownerId, env.ENCRYPTION_SECRET);
     
     // Check if force refresh requested
     const url = new URL(request.url);

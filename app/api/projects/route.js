@@ -42,6 +42,7 @@ export async function GET(request) {
         cfSubdomain: p.cfSubdomain,
         url: `https://${p.cfSubdomain}`,
         createdAt: p.createdAt,
+        isOwner: p.userId === user.id, // True if user created this project
       })),
     });
   } catch (error) {
