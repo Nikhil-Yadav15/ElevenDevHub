@@ -4,7 +4,7 @@ import { getDB } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { getUserGitHubToken } from "@/lib/auth/token";
 import { fetchUserRepos } from "@/lib/github/graphql";
-import { getCachedRepos } from "@/lib/cache/repos";
+import { getCachedRepos, invalidateReposCache } from "@/lib/cache/repos";
 
 export async function GET(request) {
   try {
@@ -18,6 +18,15 @@ export async function GET(request) {
     
     const token = await getUserGitHubToken(db, user.id, env.ENCRYPTION_SECRET);
     
+    // Check if force refresh requested
+    const url = new URL(request.url);
+    const forceRefresh = url.searchParams.get("refresh") === "true";
+    
+    // Invalidate cache if refresh requested
+    if (forceRefresh) {
+      await invalidateReposCache(db, user.id);
+    }
+    
     // Fetch repos with caching
     const { data: repos, fromCache } = await getCachedRepos(
       db,
@@ -29,7 +38,6 @@ export async function GET(request) {
     );
     
     // Filter out archived and optionally forks
-    const url = new URL(request.url);
     const includeArchived = url.searchParams.get("includeArchived") === "true";
     const includeForks = url.searchParams.get("includeForks") === "true";
     
