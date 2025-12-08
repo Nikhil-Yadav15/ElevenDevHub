@@ -102,7 +102,7 @@ function ProjectTypeSelector({ onSelect }) {
 
 function CreateNewProject({ onBack }) {
   const router = useRouter();
-  const [step, setStep] = useState(1); // 1: repo details, 2: template/upload, 3: files
+  const [step, setStep] = useState(1); // 1: repo details, 2: project type, 3: template/upload, 4: files
   const [loading, setLoading] = useState(false);
   
   // Step 1: Repository details
@@ -110,19 +110,30 @@ function CreateNewProject({ onBack }) {
   const [description, setDescription] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   
-  // Step 2: Template or upload mode
+  // Step 2: Project type selection
+  const [projectType, setProjectType] = useState(null); // 'frontend' or 'backend'
+  
+  // Step 3: Template or upload mode
   const [mode, setMode] = useState(null); // 'template' or 'upload'
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   
-  // Step 3: File uploads
+  // Step 4: File uploads
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [dragActive, setDragActive] = useState(false);
   
-  const templates = [
-    { id: "static-html", name: "Static HTML Site", icon: "🌐", description: "Simple HTML, CSS, JS" },
-    { id: "react-vite", name: "React + Vite", icon: "⚛️", description: "Modern React with Vite" },
-    { id: "nextjs", name: "Next.js App", icon: "▲", description: "Next.js with App Router" },
+  const frontendTemplates = [
+    { id: "static-html", name: "Static HTML Site", icon: "🌐", description: "Simple HTML, CSS, JS", type: "frontend" },
+    { id: "react-vite", name: "React + Vite", icon: "⚛️", description: "Modern React with Vite", type: "frontend" },
+    { id: "nextjs", name: "Next.js App", icon: "▲", description: "Next.js with App Router", type: "frontend" },
   ];
+  
+  const backendTemplates = [
+    { id: "express", name: "Express.js", icon: "🚀", description: "Node.js REST API server", type: "backend" },
+    { id: "fastapi", name: "FastAPI", icon: "⚡", description: "Python async web framework", type: "backend" },
+    { id: "hono", name: "Hono", icon: "🔥", description: "Lightweight edge-first framework", type: "backend" },
+  ];
+  
+  const templates = projectType === 'backend' ? backendTemplates : frontendTemplates;
   
   function handleDrag(e) {
     e.preventDefault();
@@ -256,8 +267,10 @@ function CreateNewProject({ onBack }) {
         return;
       }
       
-      // Redirect to configure page
-      router.push(`/new-project/configure?owner=${data.repository.owner}&name=${data.repository.name}&language=JavaScript`);
+      // Redirect to configure page with project type
+      const templateInfo = templates.find(t => t.id === selectedTemplate);
+      const framework = templateInfo ? templateInfo.name : '';
+      router.push(`/new-project/configure?owner=${data.repository.owner}&name=${data.repository.name}&projectType=${projectType}&framework=${encodeURIComponent(framework)}`);
     } catch (error) {
       alert(error.message);
     } finally {
@@ -288,19 +301,26 @@ function CreateNewProject({ onBack }) {
             <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-800'}`}>
               1
             </div>
-            <span className="ml-2 hidden sm:inline">Repository Details</span>
+            <span className="ml-2 hidden sm:inline">Details</span>
           </div>
-          <div className="w-12 h-0.5 bg-gray-800 mx-2"></div>
-          <div className={`flex items-center ${step >= 2 ? 'text-purple-500' : 'text-gray-600'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step >= 2 ? 'bg-purple-500 text-white' : 'bg-gray-800'}`}>
+          <div className="w-8 h-0.5 bg-gray-800 mx-1"></div>
+          <div className={`flex items-center ${step >= 2 ? 'text-cyan-500' : 'text-gray-600'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step >= 2 ? 'bg-cyan-500 text-white' : 'bg-gray-800'}`}>
               2
             </div>
-            <span className="ml-2 hidden sm:inline">Select Mode</span>
+            <span className="ml-2 hidden sm:inline">Type</span>
           </div>
-          <div className="w-12 h-0.5 bg-gray-800 mx-2"></div>
-          <div className={`flex items-center ${step >= 3 ? 'text-green-500' : 'text-gray-600'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step >= 3 ? 'bg-green-500 text-white' : 'bg-gray-800'}`}>
+          <div className="w-8 h-0.5 bg-gray-800 mx-1"></div>
+          <div className={`flex items-center ${step >= 3 ? 'text-purple-500' : 'text-gray-600'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step >= 3 ? 'bg-purple-500 text-white' : 'bg-gray-800'}`}>
               3
+            </div>
+            <span className="ml-2 hidden sm:inline">Mode</span>
+          </div>
+          <div className="w-8 h-0.5 bg-gray-800 mx-1"></div>
+          <div className={`flex items-center ${step >= 4 ? 'text-green-500' : 'text-gray-600'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step >= 4 ? 'bg-green-500 text-white' : 'bg-gray-800'}`}>
+              4
             </div>
             <span className="ml-2 hidden sm:inline">Files</span>
           </div>
@@ -360,7 +380,7 @@ function CreateNewProject({ onBack }) {
                 disabled={!repoName.trim()}
                 className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Next: Choose Template →
+                Next: Select Project Type →
               </button>
             </div>
           </div>
@@ -368,11 +388,83 @@ function CreateNewProject({ onBack }) {
         
         {step === 2 && (
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-8">
+            <h2 className="text-xl font-bold text-white mb-6">What type of project is this?</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <button
+                onClick={() => setProjectType('frontend')}
+                className={`group p-8 border-2 rounded-lg transition text-left ${
+                  projectType === 'frontend'
+                    ? 'border-blue-500 bg-blue-500/10'
+                    : 'border-gray-800 hover:border-blue-500'
+                }`}
+              >
+                <div className="text-5xl mb-4">🌐</div>
+                <h3 className={`text-xl font-bold mb-2 transition ${
+                  projectType === 'frontend' ? 'text-blue-400' : 'text-white group-hover:text-blue-400'
+                }`}>
+                  Frontend
+                </h3>
+                <p className="text-gray-400 mb-4">
+                  User interfaces and client-side applications
+                </p>
+                <ul className="text-sm text-gray-500 space-y-1">
+                  <li>✓ React, Next.js, Vue, Angular</li>
+                  <li>✓ Static HTML/CSS/JavaScript</li>
+                  <li>✓ Deploy to Cloudflare Pages</li>
+                </ul>
+              </button>
+              
+              <button
+                onClick={() => setProjectType('backend')}
+                className={`group p-8 border-2 rounded-lg transition text-left ${
+                  projectType === 'backend'
+                    ? 'border-purple-500 bg-purple-500/10'
+                    : 'border-gray-800 hover:border-purple-500'
+                }`}
+              >
+                <div className="text-5xl mb-4">⚙️</div>
+                <h3 className={`text-xl font-bold mb-2 transition ${
+                  projectType === 'backend' ? 'text-purple-400' : 'text-white group-hover:text-purple-400'
+                }`}>
+                  Backend
+                </h3>
+                <p className="text-gray-400 mb-4">
+                  APIs, servers, and backend services
+                </p>
+                <ul className="text-sm text-gray-500 space-y-1">
+                  <li>✓ Express, FastAPI, NestJS</li>
+                  <li>✓ REST APIs, GraphQL</li>
+                  <li>✓ Deploy to Railway/Render</li>
+                </ul>
+              </button>
+            </div>
+            
+            <div className="mt-8 flex justify-between">
+              <button
+                onClick={() => setStep(1)}
+                className="text-gray-400 hover:text-white transition"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={() => setStep(3)}
+                disabled={!projectType}
+                className="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next: Choose Mode →
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {step === 3 && (
+          <div className="bg-gray-900 border border-gray-800 rounded-lg p-8">
             <h2 className="text-xl font-bold text-white mb-6">How would you like to add files?</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <button
-                onClick={() => { setMode('template'); setStep(3); }}
+                onClick={() => { setMode('template'); setStep(4); }}
                 className="group p-8 border-2 border-gray-800 rounded-lg hover:border-purple-500 transition text-left"
               >
                 <div className="text-5xl mb-4">📋</div>
@@ -380,7 +472,7 @@ function CreateNewProject({ onBack }) {
                   Use Template
                 </h3>
                 <p className="text-gray-400 mb-4">
-                  Start with a pre-configured template
+                  Start with a pre-configured {projectType} template
                 </p>
                 <ul className="text-sm text-gray-500 space-y-1">
                   <li>✓ Quick setup</li>
@@ -390,7 +482,7 @@ function CreateNewProject({ onBack }) {
               </button>
               
               <button
-                onClick={() => { setMode('upload'); setStep(3); }}
+                onClick={() => { setMode('upload'); setStep(4); }}
                 className="group p-8 border-2 border-gray-800 rounded-lg hover:border-green-500 transition text-left"
               >
                 <div className="text-5xl mb-4">📤</div>
@@ -410,7 +502,7 @@ function CreateNewProject({ onBack }) {
             
             <div className="flex justify-start">
               <button
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
                 className="text-gray-400 hover:text-white transition"
               >
                 ← Back
@@ -419,7 +511,7 @@ function CreateNewProject({ onBack }) {
           </div>
         )}
         
-        {step === 3 && mode === 'template' && (
+        {step === 4 && mode === 'template' && (
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-8">
             <h2 className="text-xl font-bold text-white mb-6">Choose a Template</h2>
             
@@ -443,7 +535,7 @@ function CreateNewProject({ onBack }) {
             
             <div className="mt-8 flex justify-between">
               <button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
                 className="text-gray-400 hover:text-white transition"
               >
                 ← Back
@@ -459,7 +551,7 @@ function CreateNewProject({ onBack }) {
           </div>
         )}
         
-        {step === 3 && mode === 'upload' && (
+        {step === 4 && mode === 'upload' && (
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-8">
             <h2 className="text-xl font-bold text-white mb-6">Upload Your Files</h2>
             
@@ -569,7 +661,7 @@ function CreateNewProject({ onBack }) {
             
             <div className="mt-8 flex justify-between">
               <button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
                 className="text-gray-400 hover:text-white transition"
               >
                 ← Back
@@ -598,30 +690,11 @@ function SelectExistingRepo({ onBack }) {
   const [search, setSearch] = useState("");
   const [languageFilter, setLanguageFilter] = useState("all");
   
-  useEffect(() => {
-    loadRepos();
-  }, []);
-  
-  async function loadRepos(forceRefresh = false) {
-    try {
-      setLoading(true);
-      const url = forceRefresh 
-        ? "/api/repos?refresh=true" 
-        : "/api/repos";
-      
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to load repos");
-      
-      const data = await res.json();
-      setRepos(data.repos || []);
-      setFromCache(data.fromCache);
-    } catch (error) {
-      console.error("Load repos error:", error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }
+  // Detection state
+  const [selectedRepo, setSelectedRepo] = useState(null);
+  const [detecting, setDetecting] = useState(false);
+  const [detectionResult, setDetectionResult] = useState(null);
+  const [overrideType, setOverrideType] = useState(null);
   
   useEffect(() => {
     loadRepos();
@@ -653,6 +726,48 @@ function SelectExistingRepo({ onBack }) {
     await loadRepos(true);
   }
   
+  async function handleRepoSelect(repo) {
+    setSelectedRepo(repo);
+    setDetecting(true);
+    setDetectionResult(null);
+    setOverrideType(null);
+    
+    try {
+      const res = await fetch(`/api/repos/${repo.owner}/${repo.name}/detect-type`);
+      const data = await res.json();
+      
+      if (res.ok) {
+        setDetectionResult(data);
+        // Auto-set override to detected type
+        if (data.projectType !== 'unknown') {
+          setOverrideType(data.projectType);
+        }
+      } else {
+        setDetectionResult({ error: data.error, projectType: 'unknown' });
+      }
+    } catch (error) {
+      console.error("Detection error:", error);
+      setDetectionResult({ error: error.message, projectType: 'unknown' });
+    } finally {
+      setDetecting(false);
+    }
+  }
+  
+  function handleContinue() {
+    if (!selectedRepo || !overrideType) return;
+    router.push(`/new-project/configure?owner=${selectedRepo.owner}&name=${selectedRepo.name}&projectType=${overrideType}&framework=${encodeURIComponent(detectionResult?.detectedFramework || '')}`);
+  }
+  
+  function handleBack() {
+    if (selectedRepo) {
+      setSelectedRepo(null);
+      setDetectionResult(null);
+      setOverrideType(null);
+    } else {
+      onBack();
+    }
+  }
+  
   // Get unique languages
   const languages = ["all", ...new Set(repos.map(r => r.language).filter(Boolean))];
   
@@ -668,6 +783,136 @@ function SelectExistingRepo({ onBack }) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="text-white text-xl">Loading repositories...</div>
+      </div>
+    );
+  }
+  
+  // Show detection/confirmation step
+  if (selectedRepo) {
+    return (
+      <div className="min-h-screen bg-gray-950">
+        <header className="border-b border-gray-800 bg-gray-900">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-white">Detect Project Type</h1>
+              <button
+                onClick={handleBack}
+                className="text-gray-400 hover:text-white transition"
+              >
+                ← Back
+              </button>
+            </div>
+          </div>
+        </header>
+        
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-gray-900 border border-gray-800 rounded-lg p-8">
+            {/* Selected Repo Info */}
+            <div className="mb-8">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="text-4xl">📂</div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">{selectedRepo.name}</h2>
+                  <p className="text-gray-400">{selectedRepo.owner}/{selectedRepo.name}</p>
+                </div>
+              </div>
+              {selectedRepo.description && (
+                <p className="text-gray-400 mb-4">{selectedRepo.description}</p>
+              )}
+            </div>
+            
+            {/* Detection Status */}
+            {detecting ? (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin text-4xl mb-4">⚙️</div>
+                <p className="text-white text-lg">Analyzing project structure...</p>
+                <p className="text-gray-400 text-sm mt-2">Checking package.json and project files</p>
+              </div>
+            ) : detectionResult ? (
+              <div className="space-y-6">
+                {/* Detection Result */}
+                <div className={`p-6 rounded-lg border-2 ${
+                  detectionResult.projectType === 'frontend' 
+                    ? 'bg-blue-500/10 border-blue-500/30' 
+                    : detectionResult.projectType === 'backend'
+                    ? 'bg-purple-500/10 border-purple-500/30'
+                    : 'bg-yellow-500/10 border-yellow-500/30'
+                }`}>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="text-4xl">
+                      {detectionResult.projectType === 'frontend' ? '🌐' : 
+                       detectionResult.projectType === 'backend' ? '⚙️' : '❓'}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">
+                        {detectionResult.projectType === 'frontend' ? 'Frontend Project Detected' :
+                         detectionResult.projectType === 'backend' ? 'Backend Project Detected' :
+                         'Could Not Detect Project Type'}
+                      </h3>
+                      {detectionResult.detectedFramework && (
+                        <p className="text-gray-300">
+                          Framework: <span className="font-semibold">{detectionResult.detectedFramework}</span>
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-400">
+                        Confidence: {detectionResult.confidence || 'low'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Project Type Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-3">
+                    Confirm or change project type:
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      onClick={() => setOverrideType('frontend')}
+                      className={`p-6 rounded-lg border-2 text-left transition ${
+                        overrideType === 'frontend'
+                          ? 'bg-blue-500/20 border-blue-500'
+                          : 'bg-gray-800 border-gray-700 hover:border-gray-600'
+                      }`}
+                    >
+                      <div className="text-3xl mb-2">🌐</div>
+                      <h4 className="font-bold text-white mb-1">Frontend</h4>
+                      <p className="text-sm text-gray-400">
+                        React, Next.js, Vue, Angular, Static HTML/CSS
+                      </p>
+                    </button>
+                    
+                    <button
+                      onClick={() => setOverrideType('backend')}
+                      className={`p-6 rounded-lg border-2 text-left transition ${
+                        overrideType === 'backend'
+                          ? 'bg-purple-500/20 border-purple-500'
+                          : 'bg-gray-800 border-gray-700 hover:border-gray-600'
+                      }`}
+                    >
+                      <div className="text-3xl mb-2">⚙️</div>
+                      <h4 className="font-bold text-white mb-1">Backend</h4>
+                      <p className="text-sm text-gray-400">
+                        Express, FastAPI, Flask, NestJS, Hono
+                      </p>
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Continue Button */}
+                <div className="flex justify-end pt-4">
+                  <button
+                    onClick={handleContinue}
+                    disabled={!overrideType}
+                    className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg font-semibold transition"
+                  >
+                    Continue to Configuration →
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </main>
       </div>
     );
   }
@@ -745,7 +990,7 @@ function SelectExistingRepo({ onBack }) {
             </div>
           ) : (
             filteredRepos.map(repo => (
-              <RepoCard key={repo.fullName} repo={repo} />
+              <RepoCard key={repo.fullName} repo={repo} onSelect={handleRepoSelect} />
             ))
           )}
         </div>
@@ -754,11 +999,9 @@ function SelectExistingRepo({ onBack }) {
   );
 }
 
-function RepoCard({ repo }) {
-  const router = useRouter();
-  
+function RepoCard({ repo, onSelect }) {
   function handleSelect() {
-    router.push(`/new-project/configure?owner=${repo.owner}&name=${repo.name}`);
+    onSelect(repo);
   }
   
   return (
