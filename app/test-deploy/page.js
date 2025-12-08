@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import Button from "@/components/ui/Button";
 
 export default function TestDeploy() {
   const [result, setResult] = useState(null);
@@ -35,13 +36,13 @@ export default function TestDeploy() {
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <h1 className="text-3xl font-bold mb-4">Test Deployment</h1>
       
-      <button
+      <Button
         onClick={handleDeploy}
         disabled={loading}
-        className="bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-lg font-semibold disabled:opacity-50"
+        className="px-6 py-3"
       >
         {loading ? "Deploying..." : "Deploy Test Repo"}
-      </button>
+      </Button>
       
       {result && (
         <pre className="mt-4 bg-gray-800 p-4 rounded-lg overflow-auto">

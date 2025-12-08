@@ -4,6 +4,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Navbar from "@/components/ui/Navbar";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Badge from "@/components/ui/Badge";
+import Loading from "@/components/ui/Loading";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -115,75 +121,76 @@ export default function Dashboard() {
   }
   
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-white text-xl">Loading dashboard...</div>
-      </div>
-    );
+    return <Loading full message="Loading dashboard..." />;
   }
-  
+
   return (
     <div className="min-h-screen bg-gray-950">
-      {/* Header */}
-      <header className="border-b border-gray-800 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold text-white">Eleven</h1>
-              {user && (
-                <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.username}
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <span>{user.username}</span>
-                </div>
-              )}
-            </div>
-            <button
-              onClick={handleLogout}
-              className="text-sm text-gray-400 hover:text-white transition"
-            >
-              Logout
-            </button>
+      <Navbar user={user} onLogout={handleLogout} />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="dashboard-hero mb-6">
+          <div className="dashboard-header">
+          <div className="dashboard-title">
+            <h1>Workspace Dashboard</h1>
+            <div className="dashboard-subtitle">Overview of your projects, deployments, and recent activity</div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" className="text-sm flex items-center gap-2">
+              <span>👥</span>
+              <span>{showBulkInvite ? "Hide" : "Bulk Invite"}</span>
+            </Button>
+            <Link href="/new-project">
+              <Button variant="accent" className="px-4 py-2">+ New Project</Button>
+            </Link>
+          </div>
           </div>
         </div>
-      </header>
-      
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-            <div className="text-gray-400 text-sm mb-2">Total Projects</div>
-            <div className="text-3xl font-bold text-white">{stats.totalProjects}</div>
-          </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-            <div className="text-gray-400 text-sm mb-2">Active Deployments</div>
-            <div className="text-3xl font-bold text-blue-500">
-              {stats.activeDeployments}
+          <Card className="stat-card">
+            <div className="stat-row">
+              <div className="stat-icon">📁</div>
+              <div>
+                <div className="stat-label">Total Projects</div>
+                <div className="text-xs text-gray-400">All-time</div>
+              </div>
             </div>
-          </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-            <div className="text-gray-400 text-sm mb-2">Successful Deploys</div>
-            <div className="text-3xl font-bold text-green-500">
-              {stats.successfulDeployments}
+            <div className="stat-value">{stats.totalProjects}</div>
+            <div className="stat-meta">Active repos, recent activity and more</div>
+          </Card>
+
+          <Card className="stat-card">
+            <div className="stat-row">
+              <div className="stat-icon">⚡️</div>
+              <div>
+                <div className="stat-label">Active Deployments</div>
+                <div className="text-xs text-gray-400">Now</div>
+              </div>
             </div>
-          </div>
+            <div className="stat-value text-blue-400">{stats.activeDeployments}</div>
+            <div className="stat-meta">Number of currently running deployments</div>
+          </Card>
+
+          <Card className="stat-card">
+            <div className="stat-row">
+              <div className="stat-icon">✅</div>
+              <div>
+                <div className="stat-label">Successful Deploys</div>
+                <div className="text-xs text-gray-400">30d</div>
+              </div>
+            </div>
+            <div className="stat-value text-green-400">{stats.successfulDeployments}</div>
+            <div className="stat-meta">Completed deployments in the last 30 days</div>
+          </Card>
         </div>
         
         {/* Bulk Invite Section */}
         {projects.some(p => p.isOwner) && (
           <div className="mb-8">
-            <button
-              onClick={() => setShowBulkInvite(!showBulkInvite)}
-              className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2"
-            >
-              <span>👥</span>
-              <span>{showBulkInvite ? "Hide" : "Bulk Invite Collaborator"}</span>
-            </button>
-            
             {showBulkInvite && (
               <div className="mt-4 bg-gray-900 border border-gray-800 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-white mb-4">
@@ -198,13 +205,12 @@ export default function Dashboard() {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       GitHub Username
                     </label>
-                    <input
+                    <Input
                       type="text"
                       value={bulkUsername}
                       onChange={(e) => setBulkUsername(e.target.value)}
                       placeholder="username"
                       disabled={bulkInviting}
-                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   
@@ -223,13 +229,14 @@ export default function Dashboard() {
                     </select>
                   </div>
                   
-                  <button
+                  <Button
                     type="submit"
+                    variant="default"
                     disabled={bulkInviting || !bulkUsername.trim()}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-semibold transition"
+                    className="px-6 py-2"
                   >
                     {bulkInviting ? "Inviting..." : "Invite to All Projects"}
-                  </button>
+                  </Button>
                 </form>
                 
                 {bulkResult && (
@@ -306,11 +313,8 @@ export default function Dashboard() {
         {/* Projects Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">Projects</h2>
-          <Link
-            href="/new-project"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition"
-          >
-            + New Project
+          <Link href="/new-project">
+            <Button className="px-6 py-2">+ New Project</Button>
           </Link>
         </div>
         
@@ -318,23 +322,20 @@ export default function Dashboard() {
         {projects.length === 0 ? (
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-12 text-center">
             <div className="text-gray-400 mb-4">No projects yet</div>
-            <Link
-              href="/new-project"
-              className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition"
-            >
-              Deploy Your First Project
+            <Link href="/new-project">
+              <Button className="px-6 py-3">Deploy Your First Project</Button>
             </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* ✅ Pass onDelete handler */}
             {projects.map(project => (
-              <ProjectCard 
-                key={project.id} 
-                project={project}
-                onDelete={handleProjectDelete}
-              />
-            ))}
+                <ProjectCard 
+                  key={project.id} 
+                  project={project}
+                  onDelete={handleProjectDelete}
+                />
+              ))}
           </div>
         )}
       </main>
@@ -399,15 +400,18 @@ function ProjectCard({ project, onDelete }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <StatusBadge status="success" />
+          <Badge tone={project.status === 'success' ? 'success' : 'default'}>
+            {project.status || 'active'}
+          </Badge>
           {project.isOwner && (
-            <button
+            <Button
               onClick={handleDelete}
-              className="delete-button text-red-400 hover:text-red-300 transition text-sm"
+              className="delete-button text-sm"
+              variant="ghost"
               title="Delete project"
             >
-              🗑️
-            </button>
+              <span className="text-red-400">🗑️</span>
+            </Button>
           )}
         </div>
       </div>
@@ -428,20 +432,5 @@ function ProjectCard({ project, onDelete }) {
         Created {new Date(project.createdAt).toLocaleDateString()}
       </div>
     </div>
-  );
-}
-
-function StatusBadge({ status }) {
-  const colors = {
-    success: "bg-green-500/10 text-green-500 border-green-500/20",
-    failed: "bg-red-500/10 text-red-500 border-red-500/20",
-    pending: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-    building: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  };
-  
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${colors[status] || colors.success}`}>
-      {status || "active"}
-    </span>
   );
 }

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import JSZip from "jszip";
+import Loading from "@/components/ui/Loading";
 
 export default function NewProject() {
   const router = useRouter();
@@ -780,11 +781,7 @@ function SelectExistingRepo({ onBack }) {
   });
   
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-white text-xl">Loading repositories...</div>
-      </div>
-    );
+    return <Loading full variant="repos" message="Loading repositories..." />;
   }
   
   // Show detection/confirmation step

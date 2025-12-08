@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Button from "@/components/ui/Button";
 
 export default function TeamPage() {
   const params = useParams();
@@ -111,7 +112,14 @@ export default function TeamPage() {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-8">
         <div className="max-w-4xl mx-auto">
-          <p>Loading team members...</p>
+          <div className="py-12">
+            <div className="text-2xl font-semibold mb-4">Loading team members...</div>
+            <div className="space-y-3">
+              <div className="h-4 bg-gray-800 rounded w-1/3 animate-pulse" />
+              <div className="h-4 bg-gray-800 rounded w-1/2 animate-pulse" />
+              <div className="h-4 bg-gray-800 rounded w-2/3 animate-pulse" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -122,12 +130,13 @@ export default function TeamPage() {
       <div className="min-h-screen bg-gray-900 text-white p-8">
         <div className="max-w-4xl mx-auto">
           <p className="text-red-400">Error: {error}</p>
-          <button
+          <Button
             onClick={() => router.back()}
-            className="mt-4 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700"
+            className="mt-4"
+            variant="ghost"
           >
             Go Back
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -178,13 +187,13 @@ export default function TeamPage() {
                 <option value="viewer">Viewer</option>
                 <option value="maintainer">Maintainer</option>
               </select>
-              <button
+              <Button
                 type="submit"
                 disabled={inviting}
-                className="px-6 py-2 bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2"
               >
                 {inviting ? "Inviting..." : "Invite"}
-              </button>
+              </Button>
             </form>
             <p className="text-sm text-gray-400 mt-2">
               <strong>Viewer:</strong> Can view project details | <strong>Maintainer:</strong> Can deploy and manage
@@ -263,14 +272,15 @@ export default function TeamPage() {
                       </span>
                     )}
                     {isOwner && (
-                      <button
+                      <Button
                         onClick={() =>
                           handleRemove(member.userId, member.username)
                         }
-                        className="px-3 py-1 bg-red-600 rounded hover:bg-red-700 text-sm"
+                        variant="ghost"
+                        className="text-sm text-red-400 hover:text-red-300"
                       >
                         Remove
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>

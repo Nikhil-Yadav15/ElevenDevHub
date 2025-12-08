@@ -7,6 +7,9 @@ import Link from "next/link";
 import { useDeploymentPolling } from "@/hooks/useDeploymentPolling";
 import LogViewer from "@/components/LogViewer";
 import AIAnalysis from "@/components/AIAnalysis";
+import Loading from '@/components/ui/Loading';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 
 export default function ProjectDetail() {
   const params = useParams();
@@ -77,11 +80,7 @@ export default function ProjectDetail() {
   }
   
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-white text-xl">Loading project...</div>
-      </div>
-    );
+    return <Loading full message="Loading project..." />;
   }
   
   if (error) {
@@ -98,51 +97,50 @@ export default function ProjectDetail() {
   }
   
   const latestDeployment = deployments[0];
+  const liveDeployment = deployments.find(d => d.isLive) || latestDeployment;
   
   return (
     <div className="min-h-screen bg-gray-950">
-      {/* Header */}
-      <header className="border-b border-gray-800 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          {/* ✅ Updated header section */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-white mb-1">{project.name}</h1>
-              <a
-                href={project.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-400 hover:text-blue-300 transition"
-              >
-                {project.cfSubdomain} →
-              </a>
-            </div>
+
+      {/* Hero */}
+      <header className="bg-gradient-to-b from-slate-900/80 via-slate-900/70 to-slate-900/60 border-b border-gray-800/30 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <Link
-                href={`/projects/${project.id}/analytics`}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded transition text-sm"
-              >
-                📊 Analytics
-              </Link>
-              <Link
-                href={`/projects/${project.id}/team`}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition text-sm"
-              >
-                👥 Team
-              </Link>
-              <button
-                onClick={handleDeleteProject}
-                disabled={deleting}
-                className="text-sm text-red-400 hover:text-red-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {deleting ? "Deleting..." : "🗑️ Delete"}
-              </button>
-              <Link
-                href="/dashboard"
-                className="text-gray-400 hover:text-white transition"
-              >
-                ← Back
-              </Link>
+              <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+                <span className="text-white text-lg font-bold">ED</span>
+              </div>
+
+              <div>
+                <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight">{project.name}</h1>
+                <div className="flex items-center gap-3 mt-1">
+                  <a href={project.url || `https://${project.cfSubdomain}`} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-200 hover:underline flex items-center gap-2">
+                    {project.cfSubdomain}
+                    <span className="external-arrow">↗</span>
+                  </a>
+                  <span className="text-sm muted">{project.repoOwner}/{project.repoName}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-3 mr-2">
+                <div className="text-sm muted">Last deploy</div>
+                <div className="text-sm text-white">{liveDeployment ? formatTimestamp(liveDeployment.createdAt) : '—'}</div>
+                {liveDeployment && (
+                  <div className="px-2 py-0.5 rounded-md text-xs font-medium bg-green-800/30 text-green-300 border border-green-700/20">LIVE</div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Link href={`/projects/${project.id}/analytics`}>
+                  <Button variant="default">📊 Analytics</Button>
+                </Link>
+                <Link href={`/projects/${project.id}/team`}>
+                  <Button variant="subtle">👥 Team</Button>
+                </Link>
+                <Button variant="ghost" className="text-red-400" onClick={handleDeleteProject} disabled={deleting}>{deleting ? 'Deleting...' : 'Delete'}</Button>
+              </div>
             </div>
           </div>
         </div>
@@ -150,39 +148,8 @@ export default function ProjectDetail() {
       
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Project Info */}
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <div className="text-sm text-gray-400 mb-1">Repository</div>
-              <a
-                href={project.githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white hover:text-blue-400 transition font-mono text-sm"
-              >
-                {project.repoOwner}/{project.repoName}
-              </a>
-            </div>
-            
-            <div>
-              <div className="text-sm text-gray-400 mb-1">Branch</div>
-              <div className="text-white text-sm">{project.productionBranch}</div>
-            </div>
-            
-            <div>
-              <div className="text-sm text-gray-400 mb-1">Actions</div>
-              <a
-                href={project.workflowUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 transition text-sm"
-              >
-                View on GitHub →
-              </a>
-            </div>
-          </div>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="lg:col-span-2 space-y-6">
         
         {/* Latest Deployment */}
         {latestDeployment && (
@@ -217,7 +184,7 @@ export default function ProjectDetail() {
           
           {deploymentsLoading && deployments.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
-              Loading deployments...
+              <Loading compact message="Loading deployments..." />
             </div>
           ) : deploymentsError ? (
             <div className="text-center py-12 text-red-500">
@@ -239,6 +206,52 @@ export default function ProjectDetail() {
               ))}
             </div>
           )}
+        </div>
+
+          {/* end left column */}
+          </div>
+
+          {/* Sidebar */}
+          <aside className="lg:col-span-1 space-y-4">
+            <Card>
+              <div className="mb-3">
+                <div className="text-sm text-gray-400">Repository</div>
+                <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="text-white hover:text-blue-400 transition font-mono text-sm">
+                  {project.repoOwner}/{project.repoName}
+                </a>
+              </div>
+
+              <div className="mb-3">
+                <div className="text-sm text-gray-400">Branch</div>
+                <div className="text-white text-sm">{project.productionBranch}</div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a href={project.workflowUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-400 hover:text-blue-300">View on GitHub →</a>
+              </div>
+            </Card>
+
+            <Card>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="text-sm text-gray-400">Deployments</div>
+                  <div className="text-lg font-semibold text-white">{deployments.length}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400">Last</div>
+                  <div className="text-sm text-white">{deployments[0] ? formatTimestamp(deployments[0].createdAt) : '—'}</div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Link href={`/projects/${project.id}/analytics`}>
+                  <Button variant="subtle" className="px-3 py-1">View Analytics</Button>
+                </Link>
+                <Link href={`/projects/${project.id}/team`}>
+                  <Button variant="subtle" className="px-3 py-1">Manage Team</Button>
+                </Link>
+              </div>
+            </Card>
+          </aside>
         </div>
       </main>
     </div>

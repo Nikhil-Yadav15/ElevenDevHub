@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import Loading from './ui/Loading';
 
 export default function AIAnalysis({ projectId, runId, deploymentStatus }) {
   const [analysis, setAnalysis] = useState(null);
@@ -52,13 +53,7 @@ export default function AIAnalysis({ projectId, runId, deploymentStatus }) {
       
       {loading && (
         <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="animate-spin text-2xl">🤖</div>
-            <div>
-              <div className="text-purple-400 font-medium">Analyzing failure...</div>
-              <div className="text-purple-300/60 text-sm">AI is reviewing your build logs</div>
-            </div>
-          </div>
+          <Loading compact message="Analyzing failure..." />
         </div>
       )}
       

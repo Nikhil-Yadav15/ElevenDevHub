@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import Loading from '@/components/ui/Loading';
 
 export default function ProjectAnalytics() {
   const router = useRouter();
@@ -54,11 +55,7 @@ export default function ProjectAnalytics() {
   }
   
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-white text-xl">Loading analytics...</div>
-      </div>
-    );
+    return <Loading full message="Loading analytics..." />;
   }
   
   const summary = analytics?.summary || {};

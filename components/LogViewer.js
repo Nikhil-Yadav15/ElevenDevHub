@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Loading from './ui/Loading';
 
 export default function LogViewer({ projectId, runId, status }) {
   const [logs, setLogs] = useState("");
@@ -123,7 +124,9 @@ export default function LogViewer({ projectId, runId, status }) {
             </div>
           </div>
         ) : loading ? (
-          <div className="text-gray-400">Loading logs...</div>
+          <div className="text-gray-400">
+            <Loading compact message="Loading logs..." />
+          </div>
         ) : error ? (
           <div className="text-red-400">Error: {error}</div>
         ) : logs ? (
