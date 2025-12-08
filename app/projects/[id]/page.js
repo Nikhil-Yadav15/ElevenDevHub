@@ -107,6 +107,12 @@ export default function ProjectDetail() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
+              <Link href="/dashboard">
+                <Button variant="ghost" className="text-gray-400 hover:text-white">
+                  ← Back
+                </Button>
+              </Link>
+              
               <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
                 <span className="text-white text-lg font-bold">ED</span>
               </div>

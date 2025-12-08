@@ -50,7 +50,6 @@ export default function Navbar({ user, onLogout }) {
             <nav className="flex gap-2 items-center">
               <Link href="/dashboard" className="px-3 py-2 rounded-md text-sm text-indigo-100 hover:bg-white/5 hover:text-white">Dashboard</Link>
               <Link href="/new-project" className="px-3 py-2 rounded-md text-sm text-indigo-100 hover:bg-white/5 hover:text-white">New Project</Link>
-              <Link href="/projects" className="px-3 py-2 rounded-md text-sm text-indigo-100 hover:bg-white/5 hover:text-white">Projects</Link>
             </nav>
 
             <div className="w-full max-w-xs">
@@ -96,7 +95,6 @@ export default function Navbar({ user, onLogout }) {
         <div className="px-4 pt-2 pb-4 space-y-1">
           <Link href="/dashboard" className="block px-3 py-2 rounded-md text-sm text-indigo-100 hover:bg-white/5">Dashboard</Link>
           <Link href="/new-project" className="block px-3 py-2 rounded-md text-sm text-indigo-100 hover:bg-white/5">New Project</Link>
-          <Link href="/projects" className="block px-3 py-2 rounded-md text-sm text-indigo-100 hover:bg-white/5">Projects</Link>
           <div className="pt-2">
             <Input placeholder="Search projects..." />
           </div>

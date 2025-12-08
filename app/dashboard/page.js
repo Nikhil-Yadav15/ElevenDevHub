@@ -138,7 +138,11 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="ghost" className="text-sm flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              className="text-sm flex items-center gap-2"
+              onClick={() => setShowBulkInvite(!showBulkInvite)}
+            >
               <span>👥</span>
               <span>{showBulkInvite ? "Hide" : "Bulk Invite"}</span>
             </Button>
