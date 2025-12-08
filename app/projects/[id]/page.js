@@ -119,6 +119,12 @@ export default function ProjectDetail() {
             </div>
             <div className="flex items-center gap-4">
               <Link
+                href={`/projects/${project.id}/analytics`}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded transition text-sm"
+              >
+                📊 Analytics
+              </Link>
+              <Link
                 href={`/projects/${project.id}/team`}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition text-sm"
               >
