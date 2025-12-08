@@ -62,7 +62,7 @@ export default function Dashboard() {
   // ✅ Add delete handler
   const handleProjectDelete = (projectId) => {
     setProjects(projects.filter(p => p.id !== projectId));
-    loadDashboard(); // Refresh stats
+    loadDashboard(); // Refresh status here 
   };
   
   if (loading) {
