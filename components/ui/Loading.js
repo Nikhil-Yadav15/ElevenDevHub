@@ -1,7 +1,5 @@
 "use client";
-
 import React from 'react';
-
 export default function Loading({ message = 'Loading...', full = false, compact = false, variant }) {
   if (variant === 'repos') {
     return (
@@ -73,7 +71,7 @@ export default function Loading({ message = 'Loading...', full = false, compact 
     );
   }
 
-  // Default inline skeleton
+  // inline skeleton update 
   return (
     <div role="status" aria-busy="true" className="p-4 bg-gray-900/40 border border-gray-800 rounded-lg">
       <div className="flex items-center gap-4">
