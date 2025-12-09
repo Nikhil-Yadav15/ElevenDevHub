@@ -196,80 +196,140 @@ export default function Dashboard() {
         {projects.some(p => p.isOwner) && (
           <div className="mb-8">
             {showBulkInvite && (
-              <div className="mt-4 bg-gray-900 border border-gray-800 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">
-                  Invite Collaborator to All Projects
-                </h3>
-                <p className="text-sm text-gray-400 mb-4">
-                  Add a team member to all projects you own at once.
-                </p>
-                
-                <form onSubmit={handleBulkInvite} className="space-y-4">
+              <div className="mt-4 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800/50 border border-gray-700/50 rounded-2xl p-8 shadow-xl">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <h3 className="text-xl font-bold text-white mb-2">
+                      Invite Collaborator to All Projects
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      Add a team member to all projects you own at once. They'll receive access based on the role you select.
+                    </p>
+                  </div>
+                </div>
+                
+                <form onSubmit={handleBulkInvite} className="space-y-5">
+                  <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700/30">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-200 mb-3">
+                      <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
                       GitHub Username
                     </label>
                     <Input
                       type="text"
                       value={bulkUsername}
                       onChange={(e) => setBulkUsername(e.target.value)}
-                      placeholder="username"
+                      placeholder="Enter GitHub username"
                       disabled={bulkInviting}
+                      className="bg-gray-900/50 border-gray-600/50 focus:border-blue-500 text-white placeholder-gray-500"
                     />
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Role
+                  <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700/30">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-200 mb-3">
+                      <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                      </svg>
+                      Access Role
                     </label>
                     <select
                       value={bulkRole}
                       onChange={(e) => setBulkRole(e.target.value)}
                       disabled={bulkInviting}
-                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     >
-                      <option value="viewer">Viewer - View only</option>
-                      <option value="maintainer">Maintainer - Can deploy & manage</option>
+                      <option value="viewer">👁️ Viewer - View only access</option>
+                      <option value="maintainer">🔧 Maintainer - Can deploy & manage projects</option>
                     </select>
                   </div>
                   
-                  <Button
-                    type="submit"
-                    variant="default"
-                    disabled={bulkInviting || !bulkUsername.trim()}
-                    className="px-6 py-2"
-                  >
-                    {bulkInviting ? "Inviting..." : "Invite to All Projects"}
-                  </Button>
+                  <div className="flex items-center gap-3 pt-2">
+                    <Button
+                      type="submit"
+                      variant="default"
+                      disabled={bulkInviting || !bulkUsername.trim()}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {bulkInviting ? (
+                        <span className="flex items-center gap-2 justify-center">
+                          <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Sending Invites...
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2 justify-center">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                          </svg>
+                          Invite to All Projects
+                        </span>
+                      )}
+                    </Button>
+                  </div>
                 </form>
                 
                 {bulkResult && (
-                  <div className="mt-4 space-y-3">
-                    <div className="p-4 bg-green-900/20 border border-green-600/30 rounded-lg">
-                      <div className="text-green-400 font-medium mb-2">
-                        ✅ {bulkResult.message}
-                      </div>
-                      <div className="text-sm text-gray-300 space-y-1">
-                        <div>Total projects: {bulkResult.results.total}</div>
-                        <div>✅ Successfully invited: {bulkResult.results.succeeded}</div>
-                        {bulkResult.results.skipped > 0 && (
-                          <div>⏭️ Skipped (already member): {bulkResult.results.skipped}</div>
-                        )}
-                        {bulkResult.results.failed > 0 && (
-                          <div className="text-red-400">❌ Failed: {bulkResult.results.failed}</div>
-                        )}
+                  <div className="mt-6 space-y-4 animate-fadeIn">
+                    <div className="p-5 bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-500/30 rounded-xl backdrop-blur-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-green-300 font-semibold mb-3">
+                            {bulkResult.message}
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                              <div className="text-gray-400 text-xs mb-1">Total Projects</div>
+                              <div className="text-white font-bold text-lg">{bulkResult.results.total}</div>
+                            </div>
+                            <div className="bg-green-900/20 rounded-lg p-3 border border-green-600/30">
+                              <div className="text-green-400 text-xs mb-1">✅ Succeeded</div>
+                              <div className="text-green-300 font-bold text-lg">{bulkResult.results.succeeded}</div>
+                            </div>
+                            {bulkResult.results.skipped > 0 && (
+                              <div className="bg-yellow-900/20 rounded-lg p-3 border border-yellow-600/30">
+                                <div className="text-yellow-400 text-xs mb-1">⏭️ Skipped</div>
+                                <div className="text-yellow-300 font-bold text-lg">{bulkResult.results.skipped}</div>
+                              </div>
+                            )}
+                            {bulkResult.results.failed > 0 && (
+                              <div className="bg-red-900/20 rounded-lg p-3 border border-red-600/30">
+                                <div className="text-red-400 text-xs mb-1">❌ Failed</div>
+                                <div className="text-red-300 font-bold text-lg">{bulkResult.results.failed}</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                     
                     {/* Show successful invites */}
                     {bulkResult.details.succeeded.length > 0 && (
-                      <details className="bg-gray-800 rounded-lg p-3">
-                        <summary className="cursor-pointer text-sm text-green-400 font-medium">
-                          ✅ Successfully Invited ({bulkResult.details.succeeded.length})
+                      <details className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/50">
+                        <summary className="cursor-pointer text-sm text-green-400 font-medium p-4 hover:bg-gray-800/70 transition-colors flex items-center gap-2">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          Successfully Invited ({bulkResult.details.succeeded.length})
                         </summary>
-                        <ul className="mt-2 space-y-1 text-xs text-gray-300 ml-4">
+                        <ul className="p-4 pt-2 space-y-2 text-sm text-gray-300">
                           {bulkResult.details.succeeded.map((item) => (
-                            <li key={item.projectId}>• {item.projectName}</li>
+                            <li key={item.projectId} className="flex items-center gap-2 p-2 bg-gray-900/50 rounded-lg">
+                              <span className="text-green-400">✓</span>
+                              <span className="font-medium">{item.projectName}</span>
+                            </li>
                           ))}
                         </ul>
                       </details>
@@ -277,14 +337,21 @@ export default function Dashboard() {
                     
                     {/* Show skipped projects */}
                     {bulkResult.details.skipped.length > 0 && (
-                      <details className="bg-gray-800 rounded-lg p-3">
-                        <summary className="cursor-pointer text-sm text-yellow-400 font-medium">
-                          ⏭️ Skipped ({bulkResult.details.skipped.length})
+                      <details className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/50">
+                        <summary className="cursor-pointer text-sm text-yellow-400 font-medium p-4 hover:bg-gray-800/70 transition-colors flex items-center gap-2">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          Skipped Projects ({bulkResult.details.skipped.length})
                         </summary>
-                        <ul className="mt-2 space-y-1 text-xs text-gray-300 ml-4">
+                        <ul className="p-4 pt-2 space-y-2 text-sm text-gray-300">
                           {bulkResult.details.skipped.map((item) => (
-                            <li key={item.projectId}>
-                              • {item.projectName} - {item.reason}
+                            <li key={item.projectId} className="flex items-start gap-2 p-2 bg-gray-900/50 rounded-lg">
+                              <span className="text-yellow-400 mt-0.5">⏭</span>
+                              <div className="flex-1">
+                                <div className="font-medium">{item.projectName}</div>
+                                <div className="text-xs text-gray-500">{item.reason}</div>
+                              </div>
                             </li>
                           ))}
                         </ul>
