@@ -24,76 +24,130 @@ export default function NewProject() {
 
 function ProjectTypeSelector({ onSelect }) {
   return (
-    <div className="min-h-screen bg-gray-950">
-      <header className="border-b border-gray-800 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
+      <header className="border-b border-gray-800/50 bg-gray-900/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-white">New Project</h1>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold text-white">New Project</h1>
+            </div>
             <Link
               href="/dashboard"
-              className="text-gray-400 hover:text-white transition"
+              className="text-gray-400 hover:text-white transition flex items-center gap-2"
             >
-              ← Back to Dashboard
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Dashboard
             </Link>
           </div>
         </div>
       </header>
       
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-white mb-3">Choose How to Start</h2>
-          <p className="text-gray-400">Deploy an existing repository or create a new project from scratch</p>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Choose How to Start</h2>
+          <p className="text-lg text-gray-400">Deploy an existing repository or create a new project from scratch</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Deploy Existing Repo */}
           <button
             onClick={() => onSelect('existing')}
-            className="group bg-gray-900 border-2 border-gray-800 rounded-2xl p-8 hover:border-blue-500 transition-all duration-300 text-left"
+            className="group relative bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-gray-700/50 rounded-2xl p-10 hover:border-blue-500/50 transition-all duration-300 text-left overflow-hidden hover:shadow-[0_0_40px_rgba(59,130,246,0.1)]"
           >
-            <div className="text-5xl mb-4">📂</div>
-            <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-blue-400 transition">
-              Deploy Existing Repo
-            </h3>
-            <p className="text-gray-400 mb-6">
-              Connect a repository from your GitHub account and deploy it instantly
-            </p>
-            <ul className="space-y-2 text-sm text-gray-500">
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span> Fast deployment
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span> Existing codebase
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span> Auto-deploy on push
-              </li>
-            </ul>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-all"></div>
+            <div className="relative">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-blue-400 transition">
+                Deploy Existing Repo
+              </h3>
+              <p className="text-gray-400 mb-6 leading-relaxed">
+                Connect a repository from your GitHub account and deploy it instantly with automatic CI/CD
+              </p>
+              <ul className="space-y-3 text-sm">
+                <li className="flex items-center gap-3 text-gray-300">
+                  <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  Instant deployment pipeline
+                </li>
+                <li className="flex items-center gap-3 text-gray-300">
+                  <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  Work with existing code
+                </li>
+                <li className="flex items-center gap-3 text-gray-300">
+                  <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  Auto-deploy on every push
+                </li>
+              </ul>
+            </div>
           </button>
           
           {/* Create New Project */}
           <button
             onClick={() => onSelect('create')}
-            className="group bg-gray-900 border-2 border-gray-800 rounded-2xl p-8 hover:border-purple-500 transition-all duration-300 text-left"
+            className="group relative bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-gray-700/50 rounded-2xl p-10 hover:border-purple-500/50 transition-all duration-300 text-left overflow-hidden hover:shadow-[0_0_40px_rgba(168,85,247,0.1)]"
           >
-            <div className="text-5xl mb-4">✨</div>
-            <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-purple-400 transition">
-              Create New Project
-            </h3>
-            <p className="text-gray-400 mb-6">
-              Start fresh with templates or upload your own files to create a new repository
-            </p>
-            <ul className="space-y-2 text-sm text-gray-500">
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span> Starter templates
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span> File upload support
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span> No Git knowledge needed
-              </li>
-            </ul>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl group-hover:bg-purple-500/10 transition-all"></div>
+            <div className="relative">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-purple-400 transition">
+                Create New Project
+              </h3>
+              <p className="text-gray-400 mb-6 leading-relaxed">
+                Start fresh with professional templates or upload your own files to bootstrap a new repository
+              </p>
+              <ul className="space-y-3 text-sm">
+                <li className="flex items-center gap-3 text-gray-300">
+                  <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  Production-ready templates
+                </li>
+                <li className="flex items-center gap-3 text-gray-300">
+                  <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  Drag & drop file upload
+                </li>
+                <li className="flex items-center gap-3 text-gray-300">
+                  <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  No Git experience needed
+                </li>
+              </ul>
+            </div>
           </button>
         </div>
       </main>
@@ -280,50 +334,72 @@ function CreateNewProject({ onBack }) {
   }
   
   return (
-    <div className="min-h-screen bg-gray-950">
-      <header className="border-b border-gray-800 bg-gray-900">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
+      <header className="border-b border-gray-800/50 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-white">Create New Project</h1>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold text-white">Create New Project</h1>
+            </div>
             <button
               onClick={onBack}
-              className="text-gray-400 hover:text-white transition"
+              className="text-gray-400 hover:text-white transition flex items-center gap-2"
             >
-              ← Back
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back
             </button>
           </div>
         </div>
       </header>
       
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Step Indicator */}
-        <div className="flex items-center justify-center mb-8">
-          <div className={`flex items-center ${step >= 1 ? 'text-blue-500' : 'text-gray-600'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-800'}`}>
-              1
+        <div className="flex items-center justify-center mb-12">
+          <div className={`flex items-center transition-all ${step >= 1 ? 'text-blue-400' : 'text-gray-600'}`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${step >= 1 ? 'bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/50' : 'bg-gray-800 text-gray-500'}`}>
+              {step > 1 ? (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              ) : '1'}
             </div>
-            <span className="ml-2 hidden sm:inline">Details</span>
+            <span className="ml-3 hidden sm:inline font-medium">Repository</span>
           </div>
-          <div className="w-8 h-0.5 bg-gray-800 mx-1"></div>
-          <div className={`flex items-center ${step >= 2 ? 'text-cyan-500' : 'text-gray-600'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step >= 2 ? 'bg-cyan-500 text-white' : 'bg-gray-800'}`}>
-              2
+          <div className={`h-0.5 w-12 mx-2 transition-all ${step >= 2 ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-gray-800'}`}></div>
+          <div className={`flex items-center transition-all ${step >= 2 ? 'text-cyan-400' : 'text-gray-600'}`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${step >= 2 ? 'bg-gradient-to-br from-cyan-500 to-purple-500 text-white shadow-lg shadow-cyan-500/50' : 'bg-gray-800 text-gray-500'}`}>
+              {step > 2 ? (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              ) : '2'}
             </div>
-            <span className="ml-2 hidden sm:inline">Type</span>
+            <span className="ml-3 hidden sm:inline font-medium">Project Type</span>
           </div>
-          <div className="w-8 h-0.5 bg-gray-800 mx-1"></div>
-          <div className={`flex items-center ${step >= 3 ? 'text-purple-500' : 'text-gray-600'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step >= 3 ? 'bg-purple-500 text-white' : 'bg-gray-800'}`}>
-              3
+          <div className={`h-0.5 w-12 mx-2 transition-all ${step >= 3 ? 'bg-gradient-to-r from-cyan-500 to-purple-500' : 'bg-gray-800'}`}></div>
+          <div className={`flex items-center transition-all ${step >= 3 ? 'text-purple-400' : 'text-gray-600'}`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${step >= 3 ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50' : 'bg-gray-800 text-gray-500'}`}>
+              {step > 3 ? (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              ) : '3'}
             </div>
-            <span className="ml-2 hidden sm:inline">Mode</span>
+            <span className="ml-3 hidden sm:inline font-medium">Mode</span>
           </div>
-          <div className="w-8 h-0.5 bg-gray-800 mx-1"></div>
-          <div className={`flex items-center ${step >= 4 ? 'text-green-500' : 'text-gray-600'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step >= 4 ? 'bg-green-500 text-white' : 'bg-gray-800'}`}>
+          <div className={`h-0.5 w-12 mx-2 transition-all ${step >= 4 ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 'bg-gray-800'}`}></div>
+          <div className={`flex items-center transition-all ${step >= 4 ? 'text-green-400' : 'text-gray-600'}`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${step >= 4 ? 'bg-gradient-to-br from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/50' : 'bg-gray-800 text-gray-500'}`}>
               4
             </div>
-            <span className="ml-2 hidden sm:inline">Files</span>
+            <span className="ml-3 hidden sm:inline font-medium">Content</span>
           </div>
         </div>
         
