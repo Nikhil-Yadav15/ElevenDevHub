@@ -1,4 +1,4 @@
-// src/components/AIAnalysis.js
+
 "use client";
 
 import { useState } from "react";
@@ -9,7 +9,7 @@ export default function AIAnalysis({ projectId, runId, deploymentStatus }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  // Only show for failed deployments
+
   if (deploymentStatus !== "completed" || !runId) {
     return null;
   }
