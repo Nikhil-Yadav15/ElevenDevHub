@@ -1,4 +1,4 @@
-// src/components/LogViewer.js
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -31,7 +31,7 @@ export default function LogViewer({ projectId, runId, status }) {
     }
   }
   
-  // Initial fetch
+  
   const isPending = runId && runId.toString().startsWith('pending-');
   useEffect(() => {
   if (isExpanded && !isPending) {
@@ -39,11 +39,11 @@ export default function LogViewer({ projectId, runId, status }) {
     }
   }, [isExpanded, isPending]);
   
-  // Poll logs while deployment is active
+ 
   useEffect(() => {
     if (!isExpanded || isPending) return; // ✅ Skip if pending
     
-    // Clear any existing interval
+ 
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
